@@ -8,6 +8,8 @@ Everything is read from your running game: recipes, conversions, item names,
 icons, trader price lists and your language. Nothing is hardcoded, so the
 numbers keep matching after a game patch instead of going quietly stale.
 
+![The planner open in game](https://raw.githubusercontent.com/Biozip/ForgePlanner/main/media/01-planner.png)
+
 ## What it does
 
 - **Plan several items at once.** Three bronze picks and two maces, not one
@@ -33,6 +35,8 @@ numbers keep matching after a game patch instead of going quietly stale.
   Buildings, Other. Search works in both English and Russian whatever language
   the game is running in.
 
+![The plan and the totals](https://raw.githubusercontent.com/Biozip/ForgePlanner/main/media/02-plan-totals.png)
+
 ### Spoiler-free by default
 
 A planner opened in your first hour would otherwise retell the whole game: a
@@ -47,6 +51,8 @@ bosses, you lose nothing: it is all open.
 The victory keys are read from the boss prefabs themselves, so the mod does not
 carry a list of boss names that a future update could quietly invalidate.
 
+![Settings](https://raw.githubusercontent.com/Biozip/ForgePlanner/main/media/03-settings.png)
+
 ## Usage
 
 Press **F7** in a loaded world, or use the **ForgePlanner** button on any
@@ -54,6 +60,8 @@ crafting station's panel. The cursor is released while the window is open, and
 the game behaves exactly as it does when you press `E` at a workbench: no
 swinging, building, walking or hotbar switching by accident. Press **F7** or
 **Esc** to close.
+
+![The button on a station panel](https://raw.githubusercontent.com/Biozip/ForgePlanner/main/media/05-station-button.png)
 
 ## Configuration
 
@@ -100,6 +108,8 @@ you have beaten.
 ## Manual installation
 
 Drop `Forgeplan.dll` into `BepInEx/plugins/`.
+
+![About](https://raw.githubusercontent.com/Biozip/ForgePlanner/main/media/04-about.png)
 
 ## Licence
 

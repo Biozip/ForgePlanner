@@ -27,8 +27,14 @@ the running game at load time and are not redistributed. Valheim is the
 property of Iron Gate Studio; this project is not affiliated with or endorsed
 by Iron Gate Studio or Coffee Stain Publishing.
 
-The only images bundled with this mod are the three link icons in `art/`
-(a globe, the GitHub mark and the Nexus Mods mark), recoloured from public
-domain sources. The GitHub and Nexus Mods marks are trademarks of their
-respective owners and are used here only to point at this project's pages on
-those sites; no endorsement is implied.
+The screenshots in `media/` of the source repository show the mod's window
+inside the running game, and therefore show Valheim's own interface around it.
+They document the mod; the game and its art remain Iron Gate's. They are not
+part of the distributed plugin.
+
+The only images bundled with this mod are the five in `art/`: four link icons
+(a globe, the GitHub mark, the Nexus Mods mark and the Steam mark), recoloured
+from public domain sources, and a direction arrow drawn for this project. The
+GitHub, Nexus Mods and Steam marks are trademarks of their respective owners
+and are used here only to point at this project's pages on those sites; no
+endorsement is implied.

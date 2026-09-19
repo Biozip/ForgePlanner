@@ -17,6 +17,8 @@ There is a companion website, [forgeplanner.pages.dev](https://forgeplanner.page
 which runs the same calculation in a browser. The two are kept honest about
 each other; see [Relationship to the website](#relationship-to-the-website).
 
+![The planner open in game](media/01-planner.png)
+
 ## What it does
 
 - **Plan several items at once.** Three bronze picks and two maces, not one
@@ -42,6 +44,12 @@ each other; see [Relationship to the website](#relationship-to-the-website).
 The window borrows the game's own font, panel and button art at runtime, so it
 matches your UI scale and your language.
 
+![The plan and the totals](media/02-plan-totals.png)
+
+Quality levels on the left of each row; then everything the plan costs, the
+stations it needs with distance and direction, and what has to go through a
+smelter or a kiln first.
+
 ### Spoiler-free by default
 
 A planner opened in your first hour would otherwise retell the whole game: a
@@ -60,6 +68,8 @@ which victory opens which biome. That is knowledge about the game, not about
 its files, and it cannot be derived from the data. A boss whose key the mod does
 not recognise is logged by name.
 
+![Settings](media/03-settings.png)
+
 ## Installing
 
 1. Install [BepInExPack_Valheim](https://thunderstore.io/c/valheim/p/denikson/BepInExPack_Valheim/).
@@ -70,6 +80,13 @@ not recognise is logged by name.
 The cursor is released while the window is open, and the game behaves exactly
 as it does when you press `E` at a workbench: no swinging, building, walking or
 hotbar switching by accident. Press **F7** or **Esc** to close.
+
+![The button on a station panel](media/05-station-button.png)
+
+The button sits on a shelf of its own below the crafting panel. A third tab
+next to Craft and Upgrade is not possible: the game places those tabs by
+numbers rather than layout, and a third one lands differently for everyone
+because UI scale is adjustable.
 
 ## Configuration
 
@@ -287,7 +304,13 @@ summary that ships with each release is `pack/CHANGELOG.md`.
 Releases before 1.0.0 predate this repository and exist only as entries in
 those files.
 
+![About](media/04-about.png)
+
 ## Licence
 
 MIT — see `LICENSE`. Not affiliated with Iron Gate Studio or Coffee Stain
 Publishing.
+
+The screenshots in `media/` show the mod's window inside the running game, so
+they necessarily show Valheim's own interface around it. They are here to
+document the mod; the game and its art remain Iron Gate's.

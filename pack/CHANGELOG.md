@@ -2,6 +2,39 @@
 
 Русская версия с подробностями — `Versions.md` в репозитории.
 
+## 1.0.0
+
+First public release. MAJOR because the config format changes, and that is
+deliberate timing.
+
+- **Config keys and comments are now in English.** Both the keys and the
+  explanation above each one used to be Russian, so a player who opened
+  `dev.forgeplanner.forgeplan.cfg` met a wall of Cyrillic and could not even
+  change the hotkey.
+
+  | Was | Now |
+  | --- | --- |
+  | `[Общее] Открыть` | `[General] Open` |
+  | `[Общее] Русский язык` | `[General] Russian` |
+  | `[Общее] Скрывать недостигнутое` | `[General] HideUnreached` |
+  | `[Запасы] Считать сундуки` | `[Stock] CountChests` |
+  | `[Запасы] Радиус` | `[Stock] Radius` |
+  | `[Станок] Кнопка у станка` | `[Station] Button` |
+  | `[Станок] Угол` | `[Station] Corner` |
+  | `[Станок] Отступ по горизонтали` | `[Station] OffsetX` |
+  | `[Станок] Смещение вниз` | `[Station] DropDown` |
+  | `[Отладка] Самопроверка` | `[Debug] SelfTest` |
+
+  Renaming keys resets everyone's settings to defaults, which is normally
+  reason enough to leave them alone. But right now nobody's settings exist —
+  the mod has never been published. This is the last moment the fix is free.
+
+  Russian stays where it belongs: in the window's own labels, which have a
+  language switch.
+- **The GitHub button in the Info panel opens the repository** rather than the
+  author's profile.
+- **The source is public:** <https://github.com/Biozip/ForgePlanner>
+
 ## 0.23.0
 
 - **Materials you buy are labelled with the trader and the price.** Some

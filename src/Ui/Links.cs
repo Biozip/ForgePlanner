@@ -17,7 +17,7 @@ public static class Links {
     /// <summary>Профиль автора.</summary>
     public const string Steam = "https://steamcommunity.com/id/Antizip/";
 
-    public const string Github = "https://github.com/Biozip";
+    public const string Github = "https://github.com/Biozip/ForgePlanner";
 
     public const string Nexus = "https://www.nexusmods.com/profile/biozip";
 }

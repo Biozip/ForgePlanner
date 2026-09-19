@@ -61,18 +61,18 @@ swinging, building, walking or hotbar switching by accident. Press **F7** or
 
 | Section | Key | Default | Meaning |
 | --- | --- | --- | --- |
-| `Общее` | `Открыть` | `F7` | Hotkey that opens the planner |
-| `Общее` | `Русский язык` | `false` | Window labels in Russian |
-| `Общее` | `Скрывать недостигнутое` | `true` | Lock biomes until their boss is beaten |
-| `Запасы` | `Считать сундуки` | `true` | Include nearby chests, not just your backpack |
-| `Запасы` | `Радиус` | `20` | How far a chest counts as yours, in metres |
-| `Станок` | `Кнопка у станка` | `true` | Show the ForgePlanner button on station panels |
-| `Станок` | `Угол` | `BottomRight` | Which side of the panel the button's shelf sits on |
-| `Станок` | `Отступ по горизонтали` | `14` | Shelf offset from the panel edge, in points |
-| `Станок` | `Смещение вниз` | `0` | How far below the panel edge to drop the shelf |
-| `Отладка` | `Самопроверка` | `false` | Dump the parsed catalogue to the log on world load |
+| `General` | `Open` | `F7` | Hotkey that opens the planner |
+| `General` | `Russian` | `false` | Window labels in Russian |
+| `General` | `HideUnreached` | `true` | Lock biomes until their boss is beaten |
+| `Stock` | `CountChests` | `true` | Count nearby chests, not just your backpack |
+| `Stock` | `Radius` | `20` | How far a chest counts as yours, in metres |
+| `Station` | `Button` | `true` | Show the ForgePlanner button on station panels |
+| `Station` | `Corner` | `BottomRight` | Which side of the panel the button's shelf sits on |
+| `Station` | `OffsetX` | `14` | Shelf offset from the panel edge, in points |
+| `Station` | `DropDown` | `0` | How far below the panel edge to drop the shelf |
+| `Debug` | `SelfTest` | `false` | Dump the parsed catalogue to the log on world load |
 
-The three `Станок` keys are there for repair rather than taste: the crafting
+The three `Station` keys are there for repair rather than taste: the crafting
 panel belongs to the game, and a future Valheim update may move it. If the
 button ends up in the wrong place, it can be put back without a new release of
 the mod.

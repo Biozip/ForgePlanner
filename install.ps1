@@ -55,17 +55,17 @@ if (Test-Path $log) {
     Write-Host "Старый лог отложен в LogOutput.prev.log"
 }
 
-# Самопроверка стоит времени и сотен строк в лог при каждом входе в мир —
+# SelfTest стоит времени и сотен строк в лог при каждом входе в мир —
 # держать её включённой постоянно незачем.
 if ($SelfTest -or $NoSelfTest) {
     $want = if ($SelfTest) { 'true' } else { 'false' }
     $cfg = Join-Path $ValheimDir 'BepInEx\config\dev.forgeplanner.forgeplan.cfg'
     if (Test-Path $cfg) {
         $text = Get-Content $cfg -Raw -Encoding UTF8
-        if ($text -match '(?m)^\s*Самопроверка\s*=') {
-            $text = $text -replace '(?m)^\s*Самопроверка\s*=.*$', "Самопроверка = $want"
+        if ($text -match '(?m)^\s*SelfTest\s*=') {
+            $text = $text -replace '(?m)^\s*SelfTest\s*=.*$', "SelfTest = $want"
         } else {
-            $text = $text.TrimEnd() + "`r`n`r`n[Отладка]`r`n`r`nСамопроверка = $want`r`n"
+            $text = $text.TrimEnd() + "`r`n`r`n[Debug]`r`n`r`nSelfTest = $want`r`n"
         }
         [System.IO.File]::WriteAllText($cfg, $text, (New-Object System.Text.UTF8Encoding $false))
     } else {
@@ -74,13 +74,13 @@ if ($SelfTest -or $NoSelfTest) {
         $dir = Split-Path $cfg
         if (-not (Test-Path $dir)) { New-Item -ItemType Directory $dir | Out-Null }
         [System.IO.File]::WriteAllText($cfg,
-            "[Отладка]`r`n`r`nСамопроверка = $want`r`n",
+            "[Debug]`r`n`r`nSelfTest = $want`r`n",
             (New-Object System.Text.UTF8Encoding $false))
     }
     if ($SelfTest) {
-        Write-Host "Самопроверка включена: отчёт появится в BepInEx\LogOutput.log при входе в мир"
+        Write-Host "SelfTest включена: отчёт появится в BepInEx\LogOutput.log при входе в мир"
     } else {
-        Write-Host "Самопроверка выключена"
+        Write-Host "SelfTest выключена"
     }
 }
 

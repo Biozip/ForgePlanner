@@ -41,56 +41,59 @@ public class ForgeplanPlugin : BaseUnityPlugin {
     void Awake() {
         Log = Logger;
 
-        _hotkey = Config.Bind("Общее", "Открыть", new KeyboardShortcut(KeyCode.F7),
-            "Клавиша, открывающая планировщик.");
-        _includeChests = Config.Bind("Запасы", "Считать сундуки", true,
-            "Учитывать содержимое сундуков рядом, а не только рюкзак.");
-        _chestRadius = Config.Bind("Запасы", "Радиус", 20f,
-            "В каких метрах сундук считается своим.");
+        // Ключи и пояснения по-английски, хотя весь остальной проект русский.
+        // Конфиг читают глазами в текстовом файле, и площадки с модами
+        // международные: игрок из Осло, открывший сплошную кириллицу, не
+        // сможет даже сменить горячую клавишу.
+        //
+        // Переименование ломает чужие настройки, поэтому сделано ровно один
+        // раз — перед первой публикацией, когда «чужих настроек» в мире ещё
+        // не существует. Отсюда и MAJOR у этого выпуска.
+        _hotkey = Config.Bind("General", "Open", new KeyboardShortcut(KeyCode.F7),
+            "Hotkey that opens the planner.");
+        _includeChests = Config.Bind("Stock", "CountChests", true,
+            "Count nearby chests, not just your backpack.");
+        _chestRadius = Config.Bind("Stock", "Radius", 20f,
+            "How far a chest counts as yours, in metres.");
         // Английский по умолчанию: площадки с модами международные. Названия
         // предметов сюда не относятся — они приходят из Localization игры и
         // следуют её языку, подменять их мод не может и не должен.
-        _russian = Config.Bind("Общее", "Русский язык", false,
-            "Подписи самого окна по-русски. Переключается и кнопкой в заголовке.");
+        _russian = Config.Bind("General", "Russian", false,
+            "Window labels in Russian. Also toggled by the button in the header.");
         L.Ru = _russian.Value;
 
         // По умолчанию включено, и это не осторожность, а единственное
         // разумное умолчание: кто боссов уже побил, ничего не теряет — у него
         // открыто всё. А кто не побил, тому список из тысячи позиций
         // пересказывает игру вперёд, и выключить он это уже не сможет.
-        _noSpoilers = Config.Bind("Общее", "Скрывать недостигнутое", true,
-            "Прятать биомы, чьи боссы ещё не повержены. Луга, Чёрный лес и "
-            + "Океан открыты всегда. Переключается и в окне «Настройки».");
+        _noSpoilers = Config.Bind("General", "HideUnreached", true,
+            "Lock biomes whose boss is still alive. Meadows, Black Forest and "
+            + "Ocean are always open. Also toggled in the Settings window.");
         Progress.Enabled = _noSpoilers.Value;
 
-        _stationButton = Config.Bind("Станок", "Кнопка у станка", true,
-            "Показывать кнопку «ForgePlanner» на панели крафта.");
+        _stationButton = Config.Bind("Station", "Button", true,
+            "Show the ForgePlanner button on the crafting panel.");
         // Положение вынесено в конфиг не ради настройки, а ради ремонта:
         // панель крафта чужая, и следующее дополнение Valheim может её
         // подвинуть. Тогда кнопку можно вернуть на место, не дожидаясь
         // нового выпуска мода.
-        _stationCorner = Config.Bind("Станок", "Угол",
+        _stationCorner = Config.Bind("Station", "Corner",
             Ui.StationButton.Corner.BottomRight,
-            "С какой стороны держать полку с кнопкой. Полка всегда под панелью, "
-            + "значение читается как «слева» или «справа».");
-        _stationX = Config.Bind("Станок", "Отступ по горизонтали", 14f,
-            "Отступ полки от края панели, в точках.");
-        // Ключ переименован намеренно. Прежний «Отступ по вертикали» задавал
-        // подъём, и у всех, кто ставил мод раньше, в файле лежит значение от
-        // старого умолчания — с новым смыслом оно бы снова сдвинуло полку не
-        // туда. Новое имя гарантирует чистое умолчание; старая строчка осиротеет
-        // и уйдёт при первом же сохранении конфига.
-        _stationY = Config.Bind("Станок", "Смещение вниз", 0f,
-            "Насколько опустить полку ниже края панели, в точках. "
-            + "0 — вплотную к панели.");
+            "Which side of the panel the button's shelf sits on. The shelf is "
+            + "always below the panel, so this reads as left or right.");
+        _stationX = Config.Bind("Station", "OffsetX", 14f,
+            "Shelf offset from the panel edge, in points.");
+        _stationY = Config.Bind("Station", "DropDown", 0f,
+            "How far below the panel edge to drop the shelf, in points. "
+            + "0 keeps it flush with the panel.");
         Ui.StationButton.Enabled = _stationButton.Value;
         Ui.StationButton.Where = _stationCorner.Value;
         Ui.StationButton.Offset = new Vector2(_stationX.Value, _stationY.Value);
 
-        _selfTest = Config.Bind("Отладка", "Самопроверка", false,
-            "При входе в мир собрать каталог и выложить в лог таблицу превращений "
-            + "и несколько посчитанных заказов. Нужно, чтобы сверить мод с сайтом "
-            + "после обновления игры.");
+        _selfTest = Config.Bind("Debug", "SelfTest", false,
+            "On entering a world, build the catalogue and dump the conversion "
+            + "table and a few calculated orders to the log. Used to check the "
+            + "mod against the website after a game update.");
 
         // Подбор спрайтов фона — единственное место, где мод угадывает по
         // именам ассетов. Список найденного уходит в лог вместе с самопроверкой.

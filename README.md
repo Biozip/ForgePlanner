@@ -9,7 +9,7 @@ conversions, item names, icons, trader price lists and your language. Nothing
 about the game is hardcoded, so the numbers keep matching after a patch instead
 of going quietly stale.
 
-Latest release: **0.23.0**. Requires
+Latest release: **1.0.0**. Requires
 [BepInExPack_Valheim](https://thunderstore.io/c/valheim/p/denikson/BepInExPack_Valheim/)
 (denikson) — BepInEx 5.4.x. Tested against Valheim 1.0.15.
 
@@ -73,24 +73,22 @@ hotbar switching by accident. Press **F7** or **Esc** to close.
 
 ## Configuration
 
-`BepInEx/config/dev.forgeplanner.forgeplan.cfg`, written on first run. Keys are
-in Russian for historical reasons — renaming them would invalidate everyone's
-existing config, which is not worth the tidiness.
+`BepInEx/config/dev.forgeplanner.forgeplan.cfg`, written on first run.
 
 | Section | Key | Default | Meaning |
 | --- | --- | --- | --- |
-| `Общее` | `Открыть` | `F7` | Hotkey that opens the planner |
-| `Общее` | `Русский язык` | `false` | Window labels in Russian |
-| `Общее` | `Скрывать недостигнутое` | `true` | Lock biomes until their boss is beaten |
-| `Запасы` | `Считать сундуки` | `true` | Include nearby chests, not just your backpack |
-| `Запасы` | `Радиус` | `20` | How far a chest counts as yours, in metres |
-| `Станок` | `Кнопка у станка` | `true` | Show the ForgePlanner button on station panels |
-| `Станок` | `Угол` | `BottomRight` | Which side of the panel the button's shelf sits on |
-| `Станок` | `Отступ по горизонтали` | `14` | Shelf offset from the panel edge, in points |
-| `Станок` | `Смещение вниз` | `0` | How far below the panel edge to drop the shelf |
-| `Отладка` | `Самопроверка` | `false` | Dump the parsed catalogue to the log on world load |
+| `General` | `Open` | `F7` | Hotkey that opens the planner |
+| `General` | `Russian` | `false` | Window labels in Russian |
+| `General` | `HideUnreached` | `true` | Lock biomes until their boss is beaten |
+| `Stock` | `CountChests` | `true` | Count nearby chests, not just your backpack |
+| `Stock` | `Radius` | `20` | How far a chest counts as yours, in metres |
+| `Station` | `Button` | `true` | Show the ForgePlanner button on station panels |
+| `Station` | `Corner` | `BottomRight` | Which side of the panel the button's shelf sits on |
+| `Station` | `OffsetX` | `14` | Shelf offset from the panel edge, in points |
+| `Station` | `DropDown` | `0` | How far below the panel edge to drop the shelf |
+| `Debug` | `SelfTest` | `false` | Dump the parsed catalogue to the log on world load |
 
-The three `Станок` keys exist for repair rather than taste: the crafting panel
+The three `Station` keys exist for repair rather than taste: the crafting panel
 belongs to the game, and a future Valheim update may move it. If the button
 ends up in the wrong place it can be put back without a new release.
 
@@ -188,7 +186,7 @@ Loading and working are different things. The catalogue is built lazily, on the
 first time the window opens, and on success it prints nothing — silence in the
 log looks the same whether all is well or the window was never opened.
 
-So `[Отладка] Самопроверка = true` makes the mod dump, on entering a world:
+So `[Debug] SelfTest = true` makes the mod dump, on entering a world:
 catalogue sizes, the station list with localised names, the whole conversion
 table, which recipes were dropped as duplicates and why, how many Potential
 Forge idols were discarded, the raw per-level cost curve straight out of
@@ -286,7 +284,7 @@ you have beaten.
 but why, including the times a decision turned out to be wrong. The English
 summary that ships with each release is `pack/CHANGELOG.md`.
 
-Releases before 0.24.0 predate this repository and exist only as entries in
+Releases before 1.0.0 predate this repository and exist only as entries in
 those files.
 
 ## Licence

@@ -1,0 +1,186 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Сборка плагина под BepInEx 5.4.x — тот, что ставится пакетом
+    BepInExPack_Valheim (denikson). Игра на Unity/Mono, поэтому цель net472:
+    netstandard2.1 и net5+ туда не грузятся.
+
+    Ссылки берём из установленной игры и из установленного BepInEx — ни одну
+    из этих библиотек в репозиторий класть нельзя.
+
+        dotnet build -c Release -p:ValheimDir="C:\...\steamapps\common\Valheim"
+
+    Если путь стандартный, указывать ничего не нужно.
+  -->
+
+  <PropertyGroup>
+    <!--
+      Номер выпуска живёт в файле VERSION и больше нигде. Отсюда он попадает
+      в [BepInPlugin] через сгенерированный Version.g.cs и в manifest.json для
+      Thunderstore. Раньше это была прибитая строка в ForgeplanPlugin.cs, и
+      выпуски копились под одним номером.
+    -->
+    <ModVersion>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)\VERSION').Trim())</ModVersion>
+    <Version>$(ModVersion)</Version>
+    <AssemblyVersion>$(ModVersion).0</AssemblyVersion>
+    <FileVersion>$(ModVersion).0</FileVersion>
+
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>Forgeplan</AssemblyName>
+    <RootNamespace>Forgeplan</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <!-- у игры своя копия mscorlib, системную подсовывать не надо -->
+    <NoStdLib>false</NoStdLib>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(ValheimDir)' == ''">
+    <ValheimDir>C:\Program Files (x86)\Steam\steamapps\common\Valheim</ValheimDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManagedDir>$(ValheimDir)\valheim_Data\Managed</ManagedDir>
+    <!--
+      Собираемся против библиотек из lib\ — они лежат рядом с проектом, поэтому
+      сборка не требует установленного BepInEx. Установка нужна, только чтобы
+      мод ЗАПУСТИТЬ; для компиляции достаточно двух ссылок.
+      Если BepInEx всё же установлен в игру, берём оттуда: версия там та,
+      с которой мод реально побежит.
+    -->
+    <BepInExDir>$(MSBuildProjectDirectory)\lib</BepInExDir>
+    <BepInExDir Condition="Exists('$(ValheimDir)\BepInEx\core\BepInEx.dll')">$(ValheimDir)\BepInEx\core</BepInExDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="src\**\*.cs" />
+    <!--
+      Иконки ссылок лежат внутри DLL, а не файлами рядом. Причина простая:
+      мод ставят распаковкой в BepInEx\plugins, и второй файл рано или поздно
+      не докопируют — иконки пропадут, а починить это удалённо нельзя.
+      Один файл ломаться не умеет.
+
+      Это единственные ресурсы, которые мод везёт с собой, и они не из Valheim:
+      из игры по-прежнему не взято ничего (см. LICENSE).
+    -->
+    <EmbeddedResource Include="art\*.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Публичность: часть полей игры внутренняя, и без публицизации компилятор
+      их не увидит. Пакет ниже делает это на лету, не трогая файлы игры.
+      Без него пришлось бы лезть рефлексией — код станет вдвое длиннее и
+      перестанет ломаться на глазах при смене версии, что хуже, а не лучше.
+    -->
+    <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.2"
+                      PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="assembly_valheim" Publicize="true">
+      <HintPath>$(ManagedDir)\assembly_valheim.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="assembly_utils">
+      <HintPath>$(ManagedDir)\assembly_utils.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- Localization лежит здесь, а не в assembly_valheim. Проверено по
+         метаданным: без этой ссылки не соберётся ни одно имя предмета. -->
+    <Reference Include="assembly_guiutils">
+      <HintPath>$(ManagedDir)\assembly_guiutils.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(ManagedDir)\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(ManagedDir)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- Unity 6 разнесён по модулям, и каждый нужен явно: Canvas и
+         RectTransformUtility живут в UIModule, Input — в InputLegacyModule,
+         TextAnchor — в TextRenderingModule. -->
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>$(ManagedDir)\UnityEngine.UIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(ManagedDir)\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(ManagedDir)\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!--
+      UnityEngine.ImageConversionModule здесь НЕ подключён, хотя Texture2D
+      .LoadImage живёт именно в нём. Он собран под netstandard 2.1, а мод —
+      под net472, то есть netstandard 2.0, и компилятор отказывается (CS1705).
+      Поэтому LoadImage зовётся отражением, см. Ui/Art.cs.
+    -->
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(ManagedDir)\UnityEngine.UI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- Текст в интерфейсе игры — TMP_Text, а не UnityEngine.UI.Text: сверено
+         по метаданным InventoryGui. Без этой ссылки окно не соберётся. -->
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>$(ManagedDir)\Unity.TextMeshPro.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="BepInEx">
+      <HintPath>$(BepInExDir)\BepInEx.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(BepInExDir)\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!--
+    Версия обязана совпадать с верхней записью Versions.md. Git в проекте нет,
+    и выпуск без строчки в истории через месяц уже не опознать — ровно то же
+    правило, что у make_dist.py на сайте.
+  -->
+  <Target Name="CheckVersionHistory" BeforeTargets="BeforeBuild">
+    <PropertyGroup>
+      <_History>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)\Versions.md'))</_History>
+      <_Top>$([System.Text.RegularExpressions.Regex]::Match($(_History), '(?m)^## ([0-9]+\.[0-9]+\.[0-9]+)').Groups[1].Value)</_Top>
+    </PropertyGroup>
+    <Error Condition="'$(_Top)' != '$(ModVersion)'"
+           Text="VERSION = $(ModVersion), а верхняя запись Versions.md = '$(_Top)'. Опишите выпуск в Versions.md или поправьте VERSION." />
+  </Target>
+
+  <!-- Номер из VERSION — в код, чтобы [BepInPlugin] не расходился с историей. -->
+  <Target Name="GenerateVersionSource" BeforeTargets="BeforeCompile">
+    <PropertyGroup>
+      <_VersionFile>$(IntermediateOutputPath)Version.g.cs</_VersionFile>
+    </PropertyGroup>
+    <ItemGroup>
+      <_VersionLines Include="// Создаётся сборкой из файла VERSION. Правки здесь потеряются." />
+      <_VersionLines Include="namespace Forgeplan { internal static class Build {" />
+      <_VersionLines Include="    public const string Version = &quot;$(ModVersion)&quot;%3B" />
+      <_VersionLines Include="} }" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(_VersionFile)" Lines="@(_VersionLines)"
+                      Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <Compile Include="$(_VersionFile)" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="WarnMissingGame" BeforeTargets="BeforeBuild"
+          Condition="!Exists('$(ManagedDir)\assembly_valheim.dll')">
+    <Error Text="Не найдены библиотеки игры: $(ManagedDir). Укажите путь: dotnet build -p:ValheimDir=&quot;...&quot;" />
+  </Target>
+  <Target Name="WarnMissingBepInEx" BeforeTargets="BeforeBuild"
+          Condition="!Exists('$(BepInExDir)\BepInEx.dll')">
+    <Error Text="Не найден BepInEx: $(BepInExDir). Библиотеки лежат в mod\lib — если их нет, распакуйте BepInExPack_Valheim-5.4.2350.zip и возьмите BepInEx\core\BepInEx.dll и 0Harmony.dll." />
+  </Target>
+
+</Project>

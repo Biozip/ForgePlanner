@@ -2,6 +2,19 @@
 
 Русская версия с подробностями — `Versions.md` в репозитории.
 
+## 1.0.1
+
+- **The package icon is now the project logo** - the same anvil used by the
+  website, the Boosty page and the store listings. The mod used to draw its own
+  anvil in code, which made it the one place where the mark differed. In a mod
+  manager the package sits in a list of hundreds; someone arriving from the
+  website should recognise it at a glance.
+- No game art is involved, which was the point of drawing the old icon in code:
+  the logo is the author's own and is shared between the two projects.
+
+A separate release rather than a fix to 1.0.0 because Thunderstore ties the icon
+to the version number and will not take the same one twice.
+
 ## 1.0.0
 
 First public release. MAJOR because the config format changes, and that is

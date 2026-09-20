@@ -32,7 +32,11 @@ inside the running game, and therefore show Valheim's own interface around it.
 They document the mod; the game and its art remain Iron Gate's. They are not
 part of the distributed plugin.
 
-The only images bundled with this mod are the five in `art/`: four link icons
+The package icon, `icon.png`, is rasterised from `icon.svg` by `make_icon.py`.
+Both are the author's own drawing, shared with the ForgePlanner website so that
+the project looks the same wherever it is listed; no game art is involved.
+
+The only other images bundled with this mod are the five in `art/`: four link icons
 (a globe, the GitHub mark, the Nexus Mods mark and the Steam mark), recoloured
 from public domain sources, and a direction arrow drawn for this project. The
 GitHub, Nexus Mods and Steam marks are trademarks of their respective owners

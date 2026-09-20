@@ -31,9 +31,9 @@ numbers keep matching after a game patch instead of going quietly stale.
 - **Buildings too.** Walls, floors, workstations — the hammer menu is in the
   same catalogue.
 - **Filter by biome**, with the same colours as the website.
-- **Search and seven sections:** All, Weapons, Armour, Tools, Food, Materials,
-  Buildings, Other. Search works in both English and Russian whatever language
-  the game is running in.
+- **Search and eight tabs:** All, plus Weapons, Armour, Tools, Food, Materials,
+  Buildings and Other. Search works in both English and Russian whatever
+  language the game is running in.
 
 ![The plan and the totals](https://raw.githubusercontent.com/Biozip/ForgePlanner/main/media/02-plan-totals.png)
 

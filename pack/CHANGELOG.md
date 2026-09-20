@@ -11,6 +11,8 @@
   website should recognise it at a glance.
 - No game art is involved, which was the point of drawing the old icon in code:
   the logo is the author's own and is shared between the two projects.
+- The README said the planner has seven tabs and then listed eight. Corrected to
+  eight: All, plus the seven categories.
 
 A separate release rather than a fix to 1.0.0 because Thunderstore ties the icon
 to the version number and will not take the same one twice.

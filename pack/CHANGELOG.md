@@ -2,6 +2,33 @@
 
 Русская версия с подробностями — `Versions.md` в репозитории.
 
+## 1.1.0
+
+- **Pin your plan and it stays on screen.** A new button above the plan takes a
+  copy of it and shows a small panel over the game: what you still need, and how
+  much. It counts down on its own as the ore lands in your backpack, so you can
+  close the planner and go mining.
+- The whole plan is pinned, not one row at a time. What is worth pinning is
+  what you have already set up - the quantities and the quality levels - and the
+  catalogue has neither yet. One button instead of two also means there is
+  exactly one answer to "what is pinned right now".
+- It is a copy, not a mirror. Plans get rewritten: price up some armour, wipe
+  it, price up a house. A mirror would be wiped along with it, and pinning is
+  what you do precisely so as not to lose the numbers.
+- Clicks pass straight through the panel. Nothing on it takes the cursor, so a
+  pickaxe swing never gets swallowed by a hint.
+- It recounts on a timer rather than every frame: counting chests walks the
+  loaded scene. Once a second is invisible to the eye and free to the game; the
+  interval is in the config.
+- It hides itself while the planner, your inventory or the Esc menu is open, and
+  while you are dead.
+- New config section `[Pin]`: `Enabled`, `Corner`, `OffsetX`, `OffsetY`,
+  `RefreshSeconds`, `MaxRows`. The position is adjustable for repair rather than
+  taste - how much free screen there is depends on your UI scale and on what you
+  have switched on. The default clears the minimap.
+- Pinned materials are not kept between sessions and are dropped when you leave
+  the world.
+
 ## 1.0.1
 
 - **The package icon is now the project logo** - the same anvil used by the

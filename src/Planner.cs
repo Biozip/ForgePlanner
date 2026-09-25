@@ -84,9 +84,20 @@ public static class Planner {
     public static Rule Kiln => GameData.KilnRule ?? KilnFallback;
 
     /// <summary>«Как в рецептах»: что нужно на руки, без разложения.</summary>
-    public static Dictionary<string, int> Direct() {
+    public static Dictionary<string, int> Direct() { return Direct(Cart); }
+
+    /// <summary>
+    /// То же самое, но для произвольного набора позиций.
+    ///
+    /// Раньше расчёт смотрел прямо в Cart, и другого списка в моде не
+    /// существовало. Закреплённый список — второй: он живёт своей жизнью,
+    /// пока план в окне переписывают заново. Считать их одним кодом
+    /// обязательно, иначе появится второй источник правды, и расхождение
+    /// между окном и подсказкой на экране будет некому заметить.
+    /// </summary>
+    public static Dictionary<string, int> Direct(List<Entry> cart) {
         var t = new Dictionary<string, int>();
-        foreach (var e in Cart) {
+        foreach (var e in cart) {
             var it = GameData.Get(e.Id);
             if (it == null || !it.HasRecipe) continue;
             int crafts = Ceil(QtyOf(e), it.Out);
@@ -96,7 +107,9 @@ public static class Planner {
     }
 
     /// <summary>«Сырьё и добыча»: до того, что копают и рубят.</summary>
-    public static Dictionary<string, int> Raw() {
+    public static Dictionary<string, int> Raw() { return Raw(Cart); }
+
+    public static Dictionary<string, int> Raw(List<Entry> cart) {
         var t = new Dictionary<string, int>();
         System.Action<string, int, int> add = null;
         add = (m, n, depth) => {
@@ -108,12 +121,14 @@ public static class Planner {
                 add(kv.Key, kv.Value * crafts, depth + 1);
             }
         };
-        foreach (var kv in Direct()) add(kv.Key, kv.Value, 0);
+        foreach (var kv in Direct(cart)) add(kv.Key, kv.Value, 0);
         return t;
     }
 
     /// <summary>Что предстоит получить на станках по дороге.</summary>
-    public static Dictionary<string, int> Refine() {
+    public static Dictionary<string, int> Refine() { return Refine(Cart); }
+
+    public static Dictionary<string, int> Refine(List<Entry> cart) {
         var t = new Dictionary<string, int>();
         System.Action<string, int, int> add = null;
         add = (m, n, depth) => {
@@ -131,13 +146,13 @@ public static class Planner {
                 add(kv.Key, kv.Value * crafts, depth + 1);
             }
         };
-        foreach (var kv in Direct()) add(kv.Key, kv.Value, 0);
+        foreach (var kv in Direct(cart)) add(kv.Key, kv.Value, 0);
 
         // Позиция, которую делает сам станок (медовуха, выпечка), в Direct()
         // уже разложена до полуфабриката. Но станок и его время относятся к ней
         // самой, поэтому её считаем отдельно — иначе заказ на семь медовух не
         // покажет ни бродильни, ни сорока минут брожения.
-        foreach (var e in Cart)
+        foreach (var e in cart)
             if (GameData.Convert.ContainsKey(e.Id)) Add(t, e.Id, QtyOf(e));
         return t;
     }

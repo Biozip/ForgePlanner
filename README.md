@@ -50,6 +50,13 @@ Quality levels on the left of each row; then everything the plan costs, the
 stations it needs with distance and direction, and what has to go through a
 smelter or a kiln first.
 
+**Pin the plan and close the window.** A copy of it stays on screen in a small
+panel and counts down as you gather, so the numbers live in the game rather than
+in your head. It is a copy on purpose: wiping the plan to price up something
+else does not wipe what you pinned. Clicks pass straight through it, and it
+recounts on a timer rather than every frame, because counting chests walks the
+loaded scene.
+
 ### Spoiler-free by default
 
 A planner opened in your first hour would otherwise retell the whole game: a
@@ -103,6 +110,12 @@ because UI scale is adjustable.
 | `Station` | `Corner` | `BottomRight` | Which side of the panel the button's shelf sits on |
 | `Station` | `OffsetX` | `14` | Shelf offset from the panel edge, in points |
 | `Station` | `DropDown` | `0` | How far below the panel edge to drop the shelf |
+| `Pin` | `Enabled` | `true` | Keep pinned materials on screen after the planner is closed |
+| `Pin` | `Corner` | `TopRight` | Which corner of the screen the pinned list sits in |
+| `Pin` | `OffsetX` | `16` | Distance from the side of the screen, in points |
+| `Pin` | `OffsetY` | `230` | Distance from the top or bottom; the default clears the minimap |
+| `Pin` | `RefreshSeconds` | `1` | How often the remaining amounts are recounted |
+| `Pin` | `MaxRows` | `8` | How many materials to list before collapsing the rest |
 | `Debug` | `SelfTest` | `false` | Dump the parsed catalogue to the log on world load |
 
 The three `Station` keys exist for repair rather than taste: the crafting panel

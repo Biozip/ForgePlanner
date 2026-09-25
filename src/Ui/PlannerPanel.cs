@@ -67,7 +67,7 @@ public class PlannerPanel {
     TMP_InputField _search;
     TextMeshProUGUI _found, _hint, _cartCount;
     RectTransform _catalog, _cart, _totals;
-    Button _rawBtn, _directBtn, _coalBtn, _woodCoalBtn, _haveBtn;
+    Button _rawBtn, _directBtn, _coalBtn, _woodCoalBtn, _haveBtn, _pinBtn;
 
     readonly List<CatalogRow> _catalogRows = new List<CatalogRow>();
     readonly List<CartRow> _cartRows = new List<CartRow>();
@@ -458,6 +458,15 @@ public class PlannerPanel {
         UiKit.Horizontal(cartHead, 8);
         UiKit.Label(cartHead, "cart-title", L.CraftPlan, 20, UiKit.Gold)
              .gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
+        // Закрепляется план целиком, а не строка по отдельности. Закрепляют
+        // то, что уже настроено — с количеством и качеством, — а в каталоге
+        // ни того, ни другого ещё нет. Одна кнопка вместо двух означает, что
+        // на вопрос «что сейчас закреплено» есть ровно один ответ.
+        _pinBtn = UiKit.Button(cartHead, L.PinPlan, 112, 24, () => {
+            if (Pin.SameAs(Planner.Cart)) Pin.Clear();
+            else Pin.Set(Planner.Cart);
+            _planDirty = true;
+        });
         // «Очистить» стоит у плана, который она чистит. В заголовке окна, рядом
         // с «Закрыть», её принимали за «закрыть без сохранения».
         UiKit.Button(cartHead, L.Clear, 104, 24, () => {
@@ -624,6 +633,16 @@ public class PlannerPanel {
         Mark(_woodCoalBtn, Planner.BurnCoalFromWood);
         Mark(_haveBtn, _countHave);
 
+        bool pinned = Pin.SameAs(Planner.Cart);
+        Mark(_pinBtn, pinned);
+        if (_pinBtn != null)
+            foreach (var t in _pinBtn.GetComponentsInChildren<TMP_Text>(true))
+                t.text = pinned ? L.Unpin : L.PinPlan;
+        // Подсказка на экране считает по тому же переключателю, что и окно:
+        // два разных разложения одного заказа сбивали бы с толку сильнее,
+        // чем отсутствие у неё собственной настройки.
+        if (Pin.RawView != _rawView) { Pin.RawView = _rawView; Ui.PinHud.Invalidate(); }
+
         for (int i = 0; i < Planner.Cart.Count; i++) {
             if (i >= _cartRows.Count) _cartRows.Add(new CartRow(_cart, this));
             _cartRows[i].Show(Planner.Cart[i]);
@@ -682,8 +701,12 @@ public class PlannerPanel {
         }
         for (int i = notes.Count; i < _notes.Count; i++) _notes[i].Hide();
 
+        // Про закреплённое говорим, пока оно закреплено: это единственное
+        // состояние окна, которое переживает его закрытие, и молчать о нём
+        // значит оставить игрока гадать, откуда на экране взялась панель.
         _hint.text =
-            Planner.Cart.Count == 0 ? L.HintEmpty
+            pinned ? L.HintPinned
+            : Planner.Cart.Count == 0 ? L.HintEmpty
             : plan.Count > 0 ? L.HintProcessing
             : _rawView ? L.HintRaw
             : L.HintRecipes;

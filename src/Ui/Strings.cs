@@ -25,6 +25,27 @@ public static class L {
     public static string OtherLang { get { return Ru ? "EN" : "RU"; } }
 
     public static string Clear { get { return T("Clear", "Очистить"); } }
+
+    /* Закреплённый список. «Pinned» и «Закреплено» — заголовок панели на
+     * экране; остальное живёт на кнопках в окне. */
+    public static string Pinned { get { return T("Pinned", "Закреплено"); } }
+    public static string PinPlan { get { return T("Pin", "Закрепить"); } }
+    public static string Unpin { get { return T("Unpin", "Открепить"); } }
+    public static string PinDone {
+        get { return T("Everything gathered.", "Всё собрано."); }
+    }
+    /// <summary>К подписи дописывается число: «and 3».</summary>
+    public static string PinMore { get { return T("and ", "ещё "); } }
+    public static string HintPinned {
+        get {
+            return T("Pinned materials stay on screen after the window closes "
+                     + "and count down as you gather. They are a copy: clearing "
+                     + "the plan does not clear them.",
+                     "Закреплённое остаётся на экране после закрытия окна и "
+                     + "убывает по мере сбора. Это копия: очистка плана его "
+                     + "не стирает.");
+        }
+    }
     public static string Settings { get { return T("Settings", "Настройки"); } }
     public static string Info { get { return T("About", "Инфо"); } }
     public static string Site { get { return T("Website", "Сайт"); } }

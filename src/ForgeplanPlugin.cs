@@ -35,6 +35,10 @@ public class ForgeplanPlugin : BaseUnityPlugin {
     ConfigEntry<bool> _stationButton;
     ConfigEntry<float> _stationX, _stationY;
     ConfigEntry<Ui.StationButton.Corner> _stationCorner;
+    ConfigEntry<bool> _pinEnabled;
+    ConfigEntry<Ui.PinHud.Corner> _pinCorner;
+    ConfigEntry<float> _pinX, _pinY, _pinInterval;
+    ConfigEntry<int> _pinRows;
 
     Harmony _harmony;
 
@@ -90,6 +94,31 @@ public class ForgeplanPlugin : BaseUnityPlugin {
         Ui.StationButton.Where = _stationCorner.Value;
         Ui.StationButton.Offset = new Vector2(_stationX.Value, _stationY.Value);
 
+        // Закреплённый список. Положение и частота вынесены наружу по той же
+        // причине, что у кнопки у станка: свободное место на экране зависит от
+        // размера интерфейса и от того, что игрок себе включил, а частота — от
+        // того, сколько у него сундуков в базе. Угадать за всех нельзя.
+        _pinEnabled = Config.Bind("Pin", "Enabled", true,
+            "Keep pinned materials on screen after the planner is closed.");
+        _pinCorner = Config.Bind("Pin", "Corner", Ui.PinHud.Corner.TopRight,
+            "Which corner of the screen the pinned list sits in.");
+        _pinX = Config.Bind("Pin", "OffsetX", 16f,
+            "Distance from the side of the screen, in points.");
+        _pinY = Config.Bind("Pin", "OffsetY", 230f,
+            "Distance from the top or bottom of the screen, in points. The "
+            + "default clears the minimap.");
+        _pinInterval = Config.Bind("Pin", "RefreshSeconds", 1f,
+            "How often the remaining amounts are recounted. Counting chests "
+            + "walks the loaded scene, so this is not done every frame.");
+        _pinRows = Config.Bind("Pin", "MaxRows", 8,
+            "How many materials to list before collapsing the rest into a count.");
+        Ui.PinHud.Enabled = _pinEnabled.Value;
+        Ui.PinHud.Where = _pinCorner.Value;
+        Ui.PinHud.Offset = new Vector2(_pinX.Value, _pinY.Value);
+        Ui.PinHud.Interval = _pinInterval.Value;
+        Ui.PinHud.MaxRows = _pinRows.Value;
+        Pin.Changed = Ui.PinHud.Invalidate;
+
         _selfTest = Config.Bind("Debug", "SelfTest", false,
             "On entering a world, build the catalogue and dump the conversion "
             + "table and a few calculated orders to the log. Used to check the "
@@ -120,6 +149,14 @@ public class ForgeplanPlugin : BaseUnityPlugin {
         // Переключатель в окне настроек меняет Panel.Chests; запас читается
         // отсюда, поэтому значение переносится каждый кадр, а не при открытии.
         if (Panel.Visible) Stock.IncludeChests = Panel.Chests;
+
+        // Закреплённому списку запас нужен и при закрытом окне, иначе после
+        // закрытия он считал бы по настройке, оставшейся от прошлого раза.
+        if (!Panel.Visible) {
+            Stock.IncludeChests = _includeChests.Value;
+            Stock.ChestRadius = _chestRadius.Value;
+        }
+        Ui.PinHud.Tick(Panel.Visible);
 
         if (Panel.Visible) {
             // Меню Esc и инвентарь главнее: два окна, дерущихся за курсор, —
@@ -215,10 +252,15 @@ static class ResetOnLeave {
     static void Postfix() {
         ForgeplanPlugin.Panel.Drop();
         ForgeplanPlugin.Panel.ResetFilters();
+        Ui.PinHud.Drop();
         GameData.Reset();
         Trade.Reset();
         Progress.Reset();
         Planner.Cart.Clear();
+        // Закреплённое уходит вместе с планом: идентификаторы те же, но
+        // каталог за ними будет уже из другого мира, а «нужно ещё 40 железа»
+        // от прошлого персонажа — подсказка хуже, чем никакой.
+        Pin.Clear();
         SelfTest.Done = false;
     }
 }

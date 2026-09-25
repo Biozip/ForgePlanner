@@ -34,8 +34,9 @@ public static class PinHud {
     /// <summary>Показывать ли подсказку вообще. Ставит плагин из конфига.</summary>
     public static bool Enabled = true;
     public static Corner Where = Corner.TopRight;
-    /// <summary>Отступ от угла экрана в точках канвы.</summary>
-    public static Vector2 Offset = new Vector2(16f, 230f);
+    /// <summary>Отступ от угла экрана в точках канвы. Умолчание подобрано в
+    /// игре, а не на глаз: при 230 панель касалась нижнего края миникарты.</summary>
+    public static Vector2 Offset = new Vector2(42f, 268f);
     /// <summary>Как часто пересчитывать остаток, в секундах.</summary>
     public static float Interval = 1f;
     /// <summary>Сколько строк показывать; остальное сворачивается в «ещё N».</summary>

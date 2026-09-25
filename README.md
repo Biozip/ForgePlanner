@@ -114,8 +114,8 @@ because UI scale is adjustable.
 | `Station` | `DropDown` | `0` | How far below the panel edge to drop the shelf |
 | `Pin` | `Enabled` | `true` | Keep pinned materials on screen after the planner is closed |
 | `Pin` | `Corner` | `TopRight` | Which corner of the screen the pinned list sits in |
-| `Pin` | `OffsetX` | `16` | Distance from the side of the screen; written by dragging the panel |
-| `Pin` | `OffsetY` | `230` | Distance from the top or bottom; the default clears the minimap |
+| `Pin` | `OffsetX` | `42` | Distance from the side of the screen; written by dragging the panel |
+| `Pin` | `OffsetY` | `268` | Distance from the top or bottom; the default clears the minimap |
 | `Pin` | `RefreshSeconds` | `1` | How often the remaining amounts are recounted |
 | `Pin` | `MaxRows` | `8` | How many materials to list before collapsing the rest |
 | `Debug` | `SelfTest` | `false` | Dump the parsed catalogue to the log on world load |

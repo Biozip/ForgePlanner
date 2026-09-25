@@ -102,9 +102,12 @@ public class ForgeplanPlugin : BaseUnityPlugin {
             "Keep pinned materials on screen after the planner is closed.");
         _pinCorner = Config.Bind("Pin", "Corner", Ui.PinHud.Corner.TopRight,
             "Which corner of the screen the pinned list sits in.");
-        _pinX = Config.Bind("Pin", "OffsetX", 16f,
-            "Distance from the side of the screen, in points.");
-        _pinY = Config.Bind("Pin", "OffsetY", 230f,
+        // Умолчания подобраны в игре: панель ставится под миникартой с
+        // зазором. Дальше их правит не рука, а перетаскивание.
+        _pinX = Config.Bind("Pin", "OffsetX", 42f,
+            "Distance from the side of the screen, in points. Dragging the "
+            + "panel writes this.");
+        _pinY = Config.Bind("Pin", "OffsetY", 268f,
             "Distance from the top or bottom of the screen, in points. The "
             + "default clears the minimap.");
         _pinInterval = Config.Bind("Pin", "RefreshSeconds", 1f,

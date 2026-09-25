@@ -88,8 +88,8 @@ swinging, building, walking or hotbar switching by accident. Press **F7** or
 | `Station` | `OffsetX` | `14` | Shelf offset from the panel edge, in points |
 | `Pin` | `Enabled` | `true` | Keep pinned materials on screen after the planner is closed |
 | `Pin` | `Corner` | `TopRight` | Which corner of the screen the pinned list sits in |
-| `Pin` | `OffsetX` | `16` | Distance from the side of the screen; written by dragging the panel |
-| `Pin` | `OffsetY` | `230` | Distance from the top or bottom; the default clears the minimap |
+| `Pin` | `OffsetX` | `42` | Distance from the side of the screen; written by dragging the panel |
+| `Pin` | `OffsetY` | `268` | Distance from the top or bottom; the default clears the minimap |
 | `Pin` | `RefreshSeconds` | `1` | How often the remaining amounts are recounted |
 | `Pin` | `MaxRows` | `8` | How many materials to list before collapsing the rest |
 | `Station` | `DropDown` | `0` | How far below the panel edge to drop the shelf |

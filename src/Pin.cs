@@ -89,18 +89,43 @@ public static class Pin {
         return true;
     }
 
+    /// <summary>Строка списка: сколько при себе и сколько надо всего.</summary>
+    public struct MatRow {
+        public string Id;
+        public int Have, Need;
+        public bool Done { get { return Have >= Need; } }
+    }
+
     /// <summary>
-    /// Чего ещё не хватает: нужное минус то, что уже лежит в рюкзаке и
-    /// сундуках рядом.
+    /// Что нужно и сколько из этого уже при себе.
     ///
-    /// Дорогая часть здесь — Stock.Count: он обходит сцену в поисках сундуков.
-    /// Звать это каждый кадр нельзя, поэтому частоту задаёт тот, кто рисует,
-    /// а не этот метод.
+    /// Считается только рюкзак — сундуки сюда не входят намеренно, см.
+    /// Stock.Count(bool). Показывать «есть» то, что лежит в базе, значит
+    /// отвечать не на тот вопрос: список висит на экране, пока игрок в поле.
+    ///
+    /// Нужное не урезается до остатка: видно и то, сколько собрано, и сколько
+    /// всего. «1 / 10» отвечает сразу на оба вопроса, а «ещё 9» — только на
+    /// один, и по нему не понять, далеко ли до конца.
     /// </summary>
-    public static Dictionary<string, int> Left() {
-        if (Items.Count == 0) return new Dictionary<string, int>();
+    public static List<MatRow> Rows() {
+        var rows = new List<MatRow>();
+        if (Items.Count == 0) return rows;
+
         var need = RawView ? Planner.Raw(Items) : Planner.Direct(Items);
-        return Stock.Subtract(need, Stock.Count());
+        var have = Stock.Count(false);
+        foreach (var kv in need) {
+            if (kv.Value <= 0) continue;
+            int got;
+            rows.Add(new MatRow {
+                Id = kv.Key,
+                Need = kv.Value,
+                // Больше нужного показывать незачем: «14 / 10» читается как
+                // ошибка счёта, а не как запас.
+                Have = System.Math.Min(have.TryGetValue(kv.Key, out got) ? got : 0,
+                                       kv.Value),
+            });
+        }
+        return rows;
     }
 }
 

@@ -15,13 +15,24 @@ public static class Stock {
     public static float ChestRadius = 20f;
     public static bool IncludeChests = true;
 
-    public static Dictionary<string, int> Count() {
+    public static Dictionary<string, int> Count() { return Count(IncludeChests); }
+
+    /// <summary>
+    /// То же самое, но с явным ответом про сундуки.
+    ///
+    /// Закреплённому списку они не нужны никогда, и это не настройка, а суть:
+    /// он висит на экране, пока игрок в поле, и отвечает на вопрос «хватит ли
+    /// того, что при мне». Сундуки в базе на этот вопрос не отвечают — «всё
+    /// собрано» при пустом рюкзаке отправит домой за тем, чего ты туда и
+    /// пришёл добывать.
+    /// </summary>
+    public static Dictionary<string, int> Count(bool includeChests) {
         var have = new Dictionary<string, int>();
         var player = Player.m_localPlayer;
         if (player == null) return have;
 
         Take(have, player.GetInventory());
-        if (!IncludeChests) return have;
+        if (!includeChests) return have;
 
         // Сундуки рядом. Container.m_nview.IsValid() отсекает выгруженные, а
         // CheckAccess — чужие с замком: считать их своими нечестно.

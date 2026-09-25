@@ -55,8 +55,16 @@ public static class PinHud {
     static readonly List<Row> _rows = new List<Row>();
     static TextMeshProUGUI _more;
 
+    static Image _bg;
+    static TextMeshProUGUI _move;
+    static bool _dragMode;
+
     static float _due;
     static bool _dirty = true;
+
+    /// <summary>Панель перетащили — плагину пора сохранить положение в конфиг.
+    /// Передаётся тот же Offset, что читается при сборке.</summary>
+    public static System.Action<Vector2> OnMoved;
 
     /// <summary>Список закреплённого поменялся — пересчитать, не дожидаясь
     /// таймера. Подписывается плагин при запуске.</summary>
@@ -79,11 +87,59 @@ public static class PinHud {
             _dirty = true;                  // пока прятались, запас мог измениться
         }
 
+        // Меню Esc — единственный момент, когда панель можно взять мышью.
+        // Курсор в это время свободен, игра ввод не слушает, и перетаскивание
+        // ничего не отнимает у игры. В остальное время панель кликов не
+        // ловит вовсе, поэтому таскать её нечем и незачем.
+        bool drag = Menu.IsVisible();
+        if (drag != _dragMode) SetDragMode(drag);
+
         _due -= Time.unscaledDeltaTime;
         if (!_dirty && _due > 0f) return;
         _due = Mathf.Max(0.1f, Interval);
         _dirty = false;
         Refresh();
+    }
+
+    /// <summary>
+    /// Включить или выключить «панель можно двигать».
+    ///
+    /// Сводится к одному флагу: ловит ли подложка лучи. Пока не ловит, мышь
+    /// сквозь панель попадает в мир — это её обычное состояние и главное
+    /// требование к ней. Пока ловит, работает DragMove, и панель едет за
+    /// курсором.
+    /// </summary>
+    static void SetDragMode(bool on) {
+        _dragMode = on;
+        if (_bg != null) _bg.raycastTarget = on;
+        if (_move != null) _move.gameObject.SetActive(on);
+        // Меню Esc — чужое окно на той же канве, и нарисовано оно может быть
+        // поверх нашего. Тогда до панели не дотянуться мышью: лучи упрутся в
+        // меню. Поэтому на время перетаскивания поднимаем себя наверх.
+        if (on && _root != null) _root.transform.SetAsLastSibling();
+        if (!on) Remember();
+    }
+
+    /// <summary>Перевести положение панели обратно в отступ от угла и отдать
+    /// плагину. Формула — обратная той, что в Build.</summary>
+    static void Remember() {
+        if (_panel == null) return;
+        bool left = Where == Corner.TopLeft || Where == Corner.BottomLeft;
+        bool top = Where == Corner.TopLeft || Where == Corner.TopRight;
+        var p = _panel.anchoredPosition;
+        var now = new Vector2(left ? p.x : -p.x, top ? -p.y : p.y);
+
+        // Утащить панель за край экрана можно, а достать обратно уже нечем:
+        // она там и кликов не ловит, и не видна. Поэтому край держим.
+        var area = ((RectTransform)_root.transform).rect;
+        now.x = Mathf.Clamp(now.x, 0f, Mathf.Max(0f, area.width - 60f));
+        now.y = Mathf.Clamp(now.y, 0f, Mathf.Max(0f, area.height - 30f));
+        _panel.anchoredPosition = new Vector2(left ? now.x : -now.x,
+                                              top ? -now.y : now.y);
+
+        if ((now - Offset).sqrMagnitude < 1f) return;   // не двигали
+        Offset = now;
+        if (OnMoved != null) OnMoved(now);
     }
 
     /// <summary>Надо ли вообще что-то рисовать. Только дешёвые проверки:
@@ -95,9 +151,10 @@ public static class PinHud {
         if (plannerVisible) return false;
         var player = Player.m_localPlayer;
         if (player == null || player.IsDead()) return false;
-        // Инвентарь и меню Esc закрывают собой пол-экрана, и подсказка под
-        // ними всё равно нечитаема.
-        if (Menu.IsVisible() || InventoryGui.IsVisible()) return false;
+        // Инвентарь закрывает собой пол-экрана, и подсказка под ним всё равно
+        // нечитаема. А вот меню Esc панель переживает намеренно: это
+        // единственный момент, когда её можно подвинуть мышью.
+        if (InventoryGui.IsVisible()) return false;
         return true;
     }
 
@@ -107,9 +164,11 @@ public static class PinHud {
         if (_root != null) Object.Destroy(_root);
         _root = null;
         _panel = null;
-        _title = _empty = _more = null;
+        _bg = null;
+        _title = _empty = _more = _move = null;
         _list = null;
         _rows.Clear();
+        _dragMode = false;
         _dirty = true;
     }
 
@@ -130,8 +189,11 @@ public static class PinHud {
                                               top ? -Offset.y : Offset.y);
         _panel.sizeDelta = new Vector2(Width, 0f);
 
-        var bg = UiKit.Box(_panel, "bg", UiKit.PanelSprite, Back);
-        bg.raycastTarget = false;
+        _bg = UiKit.Box(_panel, "bg", UiKit.PanelSprite, Back);
+        _bg.raycastTarget = false;
+        // Таскается подложка, а двигается панель: у подложки нет своей
+        // раскладки, и ухватить её можно в любом месте, не попадая в строки.
+        _bg.gameObject.AddComponent<DragMove>().Target = _panel;
 
         var col = _panel.gameObject.AddComponent<VerticalLayoutGroup>();
         col.padding = new RectOffset(10, 10, 8, 9);
@@ -164,6 +226,8 @@ public static class PinHud {
 
         _empty = UiKit.Label(_panel, "empty", "", 13f, UiKit.Dim);
         _more = UiKit.Label(_panel, "more", "", 12f, UiKit.Faint);
+        _move = UiKit.Label(_panel, "move", L.PinDrag, 12f, UiKit.Gold);
+        _move.gameObject.SetActive(false);
 
         ForgeplanPlugin.Log.LogInfo("закреплённый список поставлен: "
                                     + Where + " " + Offset);
@@ -171,24 +235,27 @@ public static class PinHud {
     }
 
     static void Refresh() {
-        var left = Pin.Left();
         _title.text = L.Pinned + " · " + Pin.Items.Count;
 
-        // Сначала то, чего не хватает больше всего: с этим и идти копать.
-        // При равных числах — по имени, чтобы список не перетасовывался сам
-        // по себе между пересчётами.
-        var rows = left.Where(kv => kv.Value > 0)
-                       .OrderByDescending(kv => kv.Value)
-                       .ThenBy(kv => GameData.NameOf(kv.Key))
-                       .ToList();
+        // Сверху то, чего не хватает больше всего: с этим и идти копать.
+        // Собранное опускается вниз, но не исчезает — иначе список тает на
+        // глазах и по нему не видно, из чего он вообще состоял. При равных
+        // числах сортируем по имени, чтобы строки не перетасовывались сами
+        // между пересчётами.
+        var rows = Pin.Rows()
+                      .OrderBy(r => r.Done)
+                      .ThenByDescending(r => r.Need - r.Have)
+                      .ThenBy(r => GameData.NameOf(r.Id))
+                      .ToList();
 
-        _empty.gameObject.SetActive(rows.Count == 0);
-        if (rows.Count == 0) _empty.text = L.PinDone;
+        bool all = rows.Count > 0 && rows.All(r => r.Done);
+        _empty.gameObject.SetActive(rows.Count == 0 || all);
+        if (rows.Count == 0 || all) _empty.text = L.PinDone;
 
         int shown = Mathf.Min(rows.Count, Mathf.Max(1, MaxRows));
         for (int i = 0; i < shown; i++) {
             if (i >= _rows.Count) _rows.Add(new Row(_list));
-            _rows[i].Show(rows[i].Key, rows[i].Value);
+            _rows[i].Show(rows[i]);
         }
         for (int i = shown; i < _rows.Count; i++) _rows[i].Hide();
 
@@ -212,17 +279,22 @@ public static class PinHud {
             _name.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
             _need = UiKit.Label(rt, "need", "", 13f, UiKit.Gold,
                                 TextAlignmentOptions.Right);
+            // Под «10 / 156» с запасом: раньше тут стояло одно число.
             var le = _need.gameObject.AddComponent<LayoutElement>();
-            le.preferredWidth = 48;
+            le.preferredWidth = 74;
             le.minWidth = 0;
         }
 
-        public void Show(string id, int n) {
-            var it = GameData.Get(id);
+        public void Show(Pin.MatRow r) {
+            var it = GameData.Get(r.Id);
             _icon.sprite = it != null ? it.Icon : null;
             _icon.color = _icon.sprite != null ? Color.white : Color.clear;
-            _name.text = GameData.NameOf(id);
-            _need.text = n.ToString();
+            _name.text = GameData.NameOf(r.Id);
+            _need.text = r.Have + " / " + r.Need;
+            // Собранное гаснет целиком, вместе с названием: строка должна
+            // читаться как вычеркнутая, а не как «тут что-то не так с числом».
+            _need.color = r.Done ? UiKit.Faint : UiKit.Gold;
+            _name.color = r.Done ? UiKit.Faint : UiKit.Ink;
             if (!_go.activeSelf) _go.SetActive(true);
         }
 

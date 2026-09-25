@@ -118,6 +118,9 @@ public class ForgeplanPlugin : BaseUnityPlugin {
         Ui.PinHud.Interval = _pinInterval.Value;
         Ui.PinHud.MaxRows = _pinRows.Value;
         Pin.Changed = Ui.PinHud.Invalidate;
+        // Панель таскают мышью, а живёт положение в конфиге: иначе его
+        // пришлось бы подбирать заново каждый запуск.
+        Ui.PinHud.OnMoved = p => { _pinX.Value = p.x; _pinY.Value = p.y; };
 
         _selfTest = Config.Bind("Debug", "SelfTest", false,
             "On entering a world, build the catalogue and dump the conversion "
@@ -150,12 +153,8 @@ public class ForgeplanPlugin : BaseUnityPlugin {
         // отсюда, поэтому значение переносится каждый кадр, а не при открытии.
         if (Panel.Visible) Stock.IncludeChests = Panel.Chests;
 
-        // Закреплённому списку запас нужен и при закрытом окне, иначе после
-        // закрытия он считал бы по настройке, оставшейся от прошлого раза.
-        if (!Panel.Visible) {
-            Stock.IncludeChests = _includeChests.Value;
-            Stock.ChestRadius = _chestRadius.Value;
-        }
+        // Настройку про сундуки закреплённый список не читает вовсе: он
+        // всегда считает только рюкзак, см. Stock.Count(bool).
         Ui.PinHud.Tick(Panel.Visible);
 
         if (Panel.Visible) {

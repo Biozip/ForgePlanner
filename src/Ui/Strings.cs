@@ -36,14 +36,17 @@ public static class L {
     }
     /// <summary>К подписи дописывается число: «and 3».</summary>
     public static string PinMore { get { return T("and ", "ещё "); } }
+    public static string PinDrag {
+        get { return T("Drag to move", "Можно перетащить"); }
+    }
     public static string HintPinned {
         get {
             return T("Pinned materials stay on screen after the window closes "
-                     + "and count down as you gather. They are a copy: clearing "
-                     + "the plan does not clear them.",
+                     + "and count what is in your backpack, chests aside. Open "
+                     + "the Esc menu to drag the panel somewhere else.",
                      "Закреплённое остаётся на экране после закрытия окна и "
-                     + "убывает по мере сбора. Это копия: очистка плана его "
-                     + "не стирает.");
+                     + "считает то, что в рюкзаке, — сундуки не в счёт. Чтобы "
+                     + "перетащить панель, откройте меню Esc.");
         }
     }
     public static string Settings { get { return T("Settings", "Настройки"); } }

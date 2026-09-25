@@ -51,11 +51,13 @@ stations it needs with distance and direction, and what has to go through a
 smelter or a kiln first.
 
 **Pin the plan and close the window.** A copy of it stays on screen in a small
-panel and counts down as you gather, so the numbers live in the game rather than
-in your head. It is a copy on purpose: wiping the plan to price up something
-else does not wipe what you pinned. Clicks pass straight through it, and it
-recounts on a timer rather than every frame, because counting chests walks the
-loaded scene.
+panel and fills in as you gather - `1 / 10`, so you can see both how far along
+you are and how far there is to go. It counts your backpack only: the window
+counts nearby chests as well, but out in the field the question is whether you
+have it on you, not whether it is somewhere at home. It is a copy on purpose:
+wiping the plan to price up something else does not wipe what you pinned. Clicks
+pass straight through it, and you can drag it somewhere else while the Esc menu
+is open.
 
 ### Spoiler-free by default
 
@@ -112,7 +114,7 @@ because UI scale is adjustable.
 | `Station` | `DropDown` | `0` | How far below the panel edge to drop the shelf |
 | `Pin` | `Enabled` | `true` | Keep pinned materials on screen after the planner is closed |
 | `Pin` | `Corner` | `TopRight` | Which corner of the screen the pinned list sits in |
-| `Pin` | `OffsetX` | `16` | Distance from the side of the screen, in points |
+| `Pin` | `OffsetX` | `16` | Distance from the side of the screen; written by dragging the panel |
 | `Pin` | `OffsetY` | `230` | Distance from the top or bottom; the default clears the minimap |
 | `Pin` | `RefreshSeconds` | `1` | How often the remaining amounts are recounted |
 | `Pin` | `MaxRows` | `8` | How many materials to list before collapsing the rest |

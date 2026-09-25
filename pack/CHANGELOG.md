@@ -15,6 +15,19 @@
 - It is a copy, not a mirror. Plans get rewritten: price up some armour, wipe
   it, price up a house. A mirror would be wiped along with it, and pinning is
   what you do precisely so as not to lose the numbers.
+- **It counts your backpack only, not chests.** The planner window counts nearby
+  chests too, which is the right answer to "can I afford this at all". The panel
+  hangs on screen while you are out in the field and answers a different
+  question - "have I got it on me". Counting chests made it say "everything
+  gathered" while the iron sat in ten boxes fifty metres away.
+- **It shows `1 / 10` rather than `9 more`.** You can see both how much is done
+  and how much there is in total; a remainder alone does not say how far off you
+  are. Finished lines dim and sink to the bottom instead of vanishing.
+- **Drag the panel while the Esc menu is open.** That is the one moment the
+  cursor is free and the game is not listening for input, so dragging costs it
+  nothing; the rest of the time the panel takes no clicks at all. The new
+  position saves itself to the config, and the panel cannot be dragged off the
+  edge of the screen, because there would be no way to get it back.
 - Clicks pass straight through the panel. Nothing on it takes the cursor, so a
   pickaxe swing never gets swallowed by a hint.
 - It recounts on a timer rather than every frame: counting chests walks the
@@ -23,9 +36,9 @@
 - It hides itself while the planner, your inventory or the Esc menu is open, and
   while you are dead.
 - New config section `[Pin]`: `Enabled`, `Corner`, `OffsetX`, `OffsetY`,
-  `RefreshSeconds`, `MaxRows`. The position is adjustable for repair rather than
-  taste - how much free screen there is depends on your UI scale and on what you
-  have switched on. The default clears the minimap.
+  `RefreshSeconds`, `MaxRows`. `OffsetX` and `OffsetY` write themselves when you
+  drag the panel, so editing them by hand is optional. The default clears the
+  minimap.
 - Pinned materials are not kept between sessions and are dropped when you leave
   the world.
 

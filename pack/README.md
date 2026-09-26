@@ -8,7 +8,7 @@ Everything is read from your running game: recipes, conversions, item names,
 icons, trader price lists and your language. Nothing is hardcoded, so the
 numbers keep matching after a game patch instead of going quietly stale.
 
-![The planner open in game](https://raw.githubusercontent.com/Biozip/ForgePlanner/main/media/01-planner.png)
+![The planner open in game](https://staticdelivery.nexusmods.com/mods/3667/images/3879/3879-1789882735-361758933.png)
 
 ## What it does
 
@@ -35,7 +35,7 @@ numbers keep matching after a game patch instead of going quietly stale.
   Buildings and Other. Search works in both English and Russian whatever
   language the game is running in.
 
-![The plan and the totals](https://raw.githubusercontent.com/Biozip/ForgePlanner/main/media/02-plan-totals.png)
+![The plan and the totals](https://staticdelivery.nexusmods.com/mods/3667/images/3879/3879-1789882735-33851083.png)
 
 **Pin the plan and close the window.** A copy of it stays on screen in a small
 panel and fills in as you gather - `1 / 10`, so you can see both how far along
@@ -45,6 +45,14 @@ have it on you, not whether it is somewhere at home. It is a copy on purpose:
 wiping the plan to price up something else does not wipe what you pinned. Clicks
 pass straight through it, and you can drag it somewhere else while the Esc menu
 is open.
+
+**Hover a row to see the item card.** Stats of the item at the quality you
+picked, side by side with what you are wearing in the same slot: green with a
+`+` where it is better, red with a `−` where it is worse, `=` where they match.
+Damage, armour, block, resistances, durability, weight, movement penalty - the
+same numbers the game shows, computed by the game itself. Below them, the recipe
+with what is already in your backpack. For things you cannot wear, the card is
+just the recipe. Comparison can be switched off in Settings.
 
 ### Spoiler-free by default
 
@@ -60,7 +68,7 @@ bosses, you lose nothing: it is all open.
 The victory keys are read from the boss prefabs themselves, so the mod does not
 carry a list of boss names that a future update could quietly invalidate.
 
-![Settings](https://raw.githubusercontent.com/Biozip/ForgePlanner/main/media/03-settings.png)
+![Settings](https://staticdelivery.nexusmods.com/mods/3667/images/3879/3879-1789882739-1718361296.png)
 
 ## Usage
 
@@ -70,7 +78,7 @@ the game behaves exactly as it does when you press `E` at a workbench: no
 swinging, building, walking or hotbar switching by accident. Press **F7** or
 **Esc** to close.
 
-![The button on a station panel](https://raw.githubusercontent.com/Biozip/ForgePlanner/main/media/05-station-button.png)
+![The button on a station panel](https://staticdelivery.nexusmods.com/mods/3667/images/3879/3879-1789882739-1591389284.png)
 
 ## Configuration
 
@@ -92,6 +100,8 @@ swinging, building, walking or hotbar switching by accident. Press **F7** or
 | `Pin` | `OffsetY` | `268` | Distance from the top or bottom; the default clears the minimap |
 | `Pin` | `RefreshSeconds` | `1` | How often the remaining amounts are recounted |
 | `Pin` | `MaxRows` | `8` | How many materials to list before collapsing the rest |
+| `Tooltip` | `Enabled` | `true` | Show the item card when hovering a row in the planner |
+| `Tooltip` | `Compare` | `true` | Compare the hovered item with what you have equipped |
 | `Station` | `DropDown` | `0` | How far below the panel edge to drop the shelf |
 | `Debug` | `SelfTest` | `false` | Dump the parsed catalogue to the log on world load |
 
@@ -123,8 +133,6 @@ you have beaten.
 ## Manual installation
 
 Drop `Forgeplan.dll` into `BepInEx/plugins/`.
-
-![About](https://raw.githubusercontent.com/Biozip/ForgePlanner/main/media/04-about.png)
 
 ## Licence
 

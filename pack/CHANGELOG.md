@@ -2,6 +2,28 @@
 
 Русская версия с подробностями — `Versions.md` в репозитории.
 
+## 1.2.0
+
+- **Hover a row to see the item card.** The stats of the item at the quality
+  you picked, next to what you are wearing in the same slot: green with a `+`
+  where it is better, red with a `−` where it is worse, `=` where they match.
+  Rows line up across both cards, so an axe against a sword still shows a Chop
+  row on both sides.
+- The numbers come from the game's own methods, so quality and world level are
+  already in them. Weight, movement penalty and the cost of an attack count as
+  better when lower; resistances are compared by step, from very weak to immune.
+- Weapons and tools are compared with whatever is in your hands, shields with
+  your left hand, armour, capes, belts, trinkets and ammo with their own slot.
+  An empty slot says so instead of comparing against nothing.
+- Below the stats: the recipe up to the chosen quality, with `have / need` from
+  your backpack. Things you cannot wear get the recipe alone.
+- New `[Tooltip]` section: `Enabled` and `Compare`, both on. The same two
+  switches are in the Settings window.
+- The GitHub button is gone from the Info panel; Website, Steam and Nexus Mods
+  remain. Screenshots on this page now load from the Nexus gallery.
+- Cooked food now always picks the simpler station when two can make it, so
+  Meadows boar no longer risks asking for the iron cooking station.
+
 ## 1.1.0
 
 - **Pin your plan and it stays on screen.** A new button above the plan takes a

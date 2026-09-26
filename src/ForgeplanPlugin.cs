@@ -39,6 +39,7 @@ public class ForgeplanPlugin : BaseUnityPlugin {
     ConfigEntry<Ui.PinHud.Corner> _pinCorner;
     ConfigEntry<float> _pinX, _pinY, _pinInterval;
     ConfigEntry<int> _pinRows;
+    ConfigEntry<bool> _cardEnabled, _cardCompare;
 
     Harmony _harmony;
 
@@ -125,6 +126,17 @@ public class ForgeplanPlugin : BaseUnityPlugin {
         // пришлось бы подбирать заново каждый запуск.
         Ui.PinHud.OnMoved = p => { _pinX.Value = p.x; _pinY.Value = p.y; };
 
+        // Карточка предмета. Обе настройки дублируются кнопками в окне
+        // «Настройки», а сюда пишутся оттуда же.
+        _cardEnabled = Config.Bind("Tooltip", "Enabled", true,
+            "Show an item card with stats and recipe when hovering a row in "
+            + "the planner.");
+        _cardCompare = Config.Bind("Tooltip", "Compare", true,
+            "Compare the hovered item with what you have equipped in the same "
+            + "slot. Off shows the item's own stats only.");
+        ItemCard.Enabled = _cardEnabled.Value;
+        ItemCard.Compare = _cardCompare.Value;
+
         _selfTest = Config.Bind("Debug", "SelfTest", false,
             "On entering a world, build the catalogue and dump the conversion "
             + "table and a few calculated orders to the log. Used to check the "
@@ -136,6 +148,10 @@ public class ForgeplanPlugin : BaseUnityPlugin {
         Panel.OnLanguageChanged = ru => { _russian.Value = ru; };
         Panel.OnSpoilersChanged = on => { _noSpoilers.Value = on; };
         Panel.OnChestsChanged = on => { _includeChests.Value = on; };
+        Panel.OnCardChanged = (on, compare) => {
+            _cardEnabled.Value = on;
+            _cardCompare.Value = compare;
+        };
         Panel.Chests = _includeChests.Value;
 
         _harmony = new Harmony(Guid);

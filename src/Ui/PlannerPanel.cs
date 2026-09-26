@@ -82,7 +82,12 @@ public class PlannerPanel {
 
     GameObject _settings;          // оверлей настроек; null — ещё не собран
     GameObject _about;             // оверлей «Инфо»
-    Button _spoilerBtn, _chestBtn;
+    Button _spoilerBtn, _chestBtn, _cardBtn, _compareBtn;
+
+    /// <summary>Карточка предмета при наведении на строку.</summary>
+    readonly ItemCard _card = new ItemCard();
+    /// <summary>Переключатели карточки поменялись — сохранить в конфиг.</summary>
+    public System.Action<bool, bool> OnCardChanged;
     TextMeshProUGUI _openLine;
 
     /// <summary>Настройки поменялись — плагину нужно сохранить их в конфиг.</summary>
@@ -136,6 +141,7 @@ public class PlannerPanel {
     }
 
     public void Hide() {
+        _card.Hide();
         if (_root != null) _root.SetActive(false);
     }
 
@@ -173,11 +179,12 @@ public class PlannerPanel {
     }
 
     public void Drop() {
+        _card.Drop();
         _settings = null;
         _about = null;
         _ask = null;
         _askWhere = null;
-        _spoilerBtn = _chestBtn = null;
+        _spoilerBtn = _chestBtn = _cardBtn = _compareBtn = null;
         _openLine = null;
         // Гасим до Destroy: тот откладывает удаление до конца кадра, и при
         // пересборке на экране на кадр оказались бы два окна внахлёст.
@@ -199,6 +206,14 @@ public class PlannerPanel {
         if (_search != null && _search.text != _queryShown) Search();
         if (_catalogRows.Count < _matches.Count) Fill(false);
         if (_planDirty) { RefreshPlan(); _planDirty = false; }
+        _card.Tick();
+    }
+
+    /// <summary>Качество для карточки строки каталога: то, что выбрано в
+    /// плане, если вещь там есть, иначе первое.</summary>
+    int QualityOf(string id) {
+        var e = Planner.Cart.FirstOrDefault(x => x.Id == id);
+        return e != null ? e.Quality : 1;
     }
 
     /* ————————————————————————— сборка дерева ————————————————————————— */
@@ -814,7 +829,7 @@ public class PlannerPanel {
     }
 
     void BuildSettings() {
-        var box = Overlay("settings", 420f, 344f);
+        var box = Overlay("settings", 460f, 490f);
         _settings = box.parent.gameObject;
 
         UiKit.Label(box, "title", L.Settings, 22, UiKit.Gold)
@@ -837,6 +852,18 @@ public class PlannerPanel {
             RefreshSettings();
         }, 16, TextAlignmentOptions.Left);
         Hint(box, L.UseChestsHint);
+
+        _cardBtn = UiKit.Button(Line(box), L.CardShow, 320, 30, () => {
+            ItemCard.Enabled = !ItemCard.Enabled;
+            if (OnCardChanged != null) OnCardChanged(ItemCard.Enabled, ItemCard.Compare);
+            RefreshSettings();
+        }, 16, TextAlignmentOptions.Left);
+        _compareBtn = UiKit.Button(Line(box), L.CardCompare, 320, 30, () => {
+            ItemCard.Compare = !ItemCard.Compare;
+            if (OnCardChanged != null) OnCardChanged(ItemCard.Enabled, ItemCard.Compare);
+            RefreshSettings();
+        }, 16, TextAlignmentOptions.Left);
+        Hint(box, L.CardHint);
 
         var foot = UiKit.Row(box, "foot", 34);
         UiKit.Horizontal(foot, 8);
@@ -869,6 +896,8 @@ public class PlannerPanel {
     void RefreshSettings() {
         Mark(_spoilerBtn, Progress.Enabled);
         Mark(_chestBtn, Chests);
+        Mark(_cardBtn, ItemCard.Enabled);
+        Mark(_compareBtn, ItemCard.Enabled && ItemCard.Compare);
         if (_openLine != null)
             _openLine.text = L.BiomesOpen + Progress.OpenCount
                            + L.OfNine + Tiers.Ids.Length;
@@ -904,7 +933,6 @@ public class PlannerPanel {
         var row = UiKit.Row(box, "links", 48);
         UiKit.Horizontal(row, 10);
         LinkButton(row, "globe", L.Site, Links.Site);
-        LinkButton(row, "github", "GitHub", Links.Github);
         LinkButton(row, "nexus", "Nexus Mods", Links.Nexus);
         UiKit.Rect(row, "spacer").gameObject
              .AddComponent<LayoutElement>().flexibleWidth = 1;
@@ -1059,6 +1087,10 @@ public class PlannerPanel {
             catcher.raycastTarget = true;
             rt.gameObject.AddComponent<DoubleClick>().Action =
                 () => { if (_id != null) owner.Add(_id); };
+
+            var hover = rt.gameObject.AddComponent<Hover>();
+            hover.Enter = () => owner._card.Point(_go, () => _id, () => owner.QualityOf(_id));
+            hover.Exit = () => owner._card.Leave(_go);
         }
 
         public void Show(ItemDef it) {
@@ -1111,6 +1143,17 @@ public class PlannerPanel {
             UiKit.Button(rt, "×", 32, 26, () => {
                 if (_entry != null) { Planner.Cart.Remove(_entry); owner.MarkDirty(); }
             });
+
+            // Прозрачная подложка ловит курсор между кнопками: без неё наведение
+            // срабатывало бы только над ними, а карточка мигала бы на пробелах.
+            var catcher = rt.gameObject.AddComponent<Image>();
+            catcher.color = new Color(0f, 0f, 0f, 0f);
+            catcher.raycastTarget = true;
+            var hover = rt.gameObject.AddComponent<Hover>();
+            hover.Enter = () => owner._card.Point(_go,
+                () => _entry != null ? _entry.Id : null,
+                () => _entry != null ? _entry.Quality : 1);
+            hover.Exit = () => owner._card.Leave(_go);
         }
 
         public void Show(Entry e) {

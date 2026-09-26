@@ -49,6 +49,65 @@ public static class L {
                      + "перетащить панель, откройте меню Esc.");
         }
     }
+    /* Карточка предмета при наведении. Названия характеристик свои, а не из
+     * локализации игры: у мода два языка, а токены подсказки игры меняются от
+     * патча к патчу и местами склеены с разметкой. */
+    public static string CardCrafted { get { return T("Crafted", "Создаётся"); } }
+    public static string CardEquipped { get { return T("Equipped", "Надето"); } }
+    public static string CardNothing { get { return T("Nothing equipped", "Ничего не надето"); } }
+    public static string CardRecipe { get { return T("Recipe", "Рецепт"); } }
+    public static string CardShow { get { return T("Item card on hover", "Карточка при наведении"); } }
+    public static string CardCompare {
+        get { return T("Compare with equipped", "Сравнивать с надетым"); }
+    }
+    public static string CardHint {
+        get {
+            return T("Hover a row to see the item's stats and recipe. Compared "
+                     + "with what you wear: green is better, red is worse.",
+                     "Наведите на строку — появятся характеристики и рецепт. "
+                     + "Сравнение с надетым: зелёное лучше, красное хуже.");
+        }
+    }
+
+    public static string StDamage { get { return T("Damage", "Урон"); } }
+    public static string StSlash { get { return T("Slash", "Рубящий"); } }
+    public static string StBlunt { get { return T("Blunt", "Дробящий"); } }
+    public static string StPierce { get { return T("Pierce", "Колющий"); } }
+    public static string StFire { get { return T("Fire", "Огонь"); } }
+    public static string StFrost { get { return T("Frost", "Мороз"); } }
+    public static string StLightning { get { return T("Lightning", "Молния"); } }
+    public static string StPoison { get { return T("Poison", "Яд"); } }
+    public static string StSpirit { get { return T("Spirit", "Дух"); } }
+    public static string StChop { get { return T("Chop", "Рубка"); } }
+    public static string StPickaxe { get { return T("Pickaxe", "Добыча"); } }
+    public static string StToolTier { get { return T("Tool tier", "Уровень инструмента"); } }
+    public static string StArmor { get { return T("Armor", "Броня"); } }
+    public static string StBlock { get { return T("Block", "Блок"); } }
+    public static string StParry { get { return T("Parry bonus", "Парирование"); } }
+    public static string StDeflect { get { return T("Knockback on block", "Отбрасывание блоком"); } }
+    public static string StKnockback { get { return T("Knockback", "Отбрасывание"); } }
+    public static string StBackstab { get { return T("Backstab", "Удар в спину"); } }
+    public static string StStamina { get { return T("Stamina per attack", "Выносливость на удар"); } }
+    public static string StEitr { get { return T("Eitr per attack", "Эйтр на удар"); } }
+    public static string StHealth { get { return T("Health per attack", "Здоровье на удар"); } }
+    public static string StEitrRegen { get { return T("Eitr regen", "Восстановление эйтра"); } }
+    public static string StAdrenaline { get { return T("Adrenaline needed", "Нужно адреналина"); } }
+    public static string StResist { get { return T("Resistances", "Сопротивления"); } }
+    public static string StMovement { get { return T("Movement", "Скорость"); } }
+    public static string StDurability { get { return T("Durability", "Прочность"); } }
+    public static string StWeight { get { return T("Weight", "Вес"); } }
+    public static string StEffect { get { return T("Effect", "Эффект"); } }
+    public static string StSet { get { return T("Set bonus", "Комплект"); } }
+
+    public static string ModVeryWeak { get { return T("Very weak", "Очень уязвим"); } }
+    public static string ModWeak { get { return T("Weak", "Уязвим"); } }
+    public static string ModSlightlyWeak { get { return T("Slightly weak", "Слегка уязвим"); } }
+    public static string ModNormal { get { return T("Normal", "Обычно"); } }
+    public static string ModSlightlyResistant { get { return T("Slightly resistant", "Слегка устойчив"); } }
+    public static string ModResistant { get { return T("Resistant", "Устойчив"); } }
+    public static string ModVeryResistant { get { return T("Very resistant", "Очень устойчив"); } }
+    public static string ModImmune { get { return T("Immune", "Иммунитет"); } }
+
     public static string Settings { get { return T("Settings", "Настройки"); } }
     public static string Info { get { return T("About", "Инфо"); } }
     public static string Site { get { return T("Website", "Сайт"); } }

@@ -10,6 +10,9 @@ public class ItemDef {
     public string Id;                       // имя префаба в нижнем регистре
     public string Name;                     // уже локализованное имя
     public Sprite Icon;
+    /// <summary>Префаб из ObjectDB. Нужен карточке предмета: характеристики
+    /// считает сама игра, по её ItemData. У построек null.</summary>
+    public GameObject Prefab;
     public int Out = 1;                     // сколько штук даёт один крафт
     public string Station = "";             // пусто — крафтится руками
     public int MinStationLevel = 1;
@@ -377,6 +380,7 @@ public static class GameData {
             if (Items.ContainsKey(id)) continue;
             Items[id] = new ItemDef {
                 Id = id,
+                Prefab = go,
                 Name = Localization.instance.Localize(shared.m_name),
                 Icon = (shared.m_icons != null && shared.m_icons.Length > 0)
                     ? shared.m_icons[0] : null,
@@ -674,12 +678,31 @@ public static class GameData {
     }
 
     /// <summary>
-    /// Первый записавший побеждает. Это не мелочь: одно и то же мясо жарится и
-    /// на простой стойке, и на железной, а станок в карточке один. Порядок
-    /// префабов в ZNetScene не гарантирован, поэтому при желании сюда нужна
-    /// явная таблица предпочтений — иначе кабанина с Лугов потребует железную
+    /// Какой станок готовки главнее, когда продукт умеют делать несколько.
+    ///
+    /// Одно и то же мясо жарится и на простой стойке, и на железной, а станок
+    /// в карточке один. Раньше побеждал первый записавший, а порядок префабов в
+    /// ZNetScene не гарантирован — кабанина с Лугов могла потребовать железную
     /// стойку. На сайте это ровно та же ошибка, что чинилась в 1.3.1.
+    ///
+    /// Порядок — как COOK_STATIONS в tools/build_data.py сайта: раньше идёт
+    /// тот станок, что дешевле и доступен раньше. Станков, которых здесь нет
+    /// (плавильни, печь для угля), порядок не касается: там выбор делает
+    /// Prefer ниже.
     /// </summary>
+    static readonly string[] CookOrder = {
+        "fermenter",
+        "piece_oven",
+        "windmill",
+        "piece_cookingstation",
+        "piece_cookingstation_iron",
+    };
+
+    static int CookRank(string station) {
+        int i = System.Array.IndexOf(CookOrder, station);
+        return i < 0 ? int.MaxValue : i;
+    }
+
     /// <summary>
     /// Из чего плавить, когда правил несколько.
     ///
@@ -705,9 +728,12 @@ public static class GameData {
         if (string.IsNullOrEmpty(to)) return;
         string want;
         bool preferred = Prefer.TryGetValue(to, out want) && rule.Mats.ContainsKey(want);
-        // Первый записавший побеждает — кроме случая, когда пришло то самое
-        // правило, которое мы и хотели видеть.
-        if (Convert.ContainsKey(to) && !preferred) return;
+        // Первый записавший побеждает — кроме двух случаев: пришло то самое
+        // правило, которое мы и хотели видеть, или тот же продукт на станке
+        // готовки попроще.
+        Rule had;
+        if (Convert.TryGetValue(to, out had) && !preferred
+            && CookRank(rule.Station) >= CookRank(had.Station)) return;
         Convert[to] = rule;
     }
 

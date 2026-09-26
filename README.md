@@ -59,6 +59,14 @@ wiping the plan to price up something else does not wipe what you pinned. Clicks
 pass straight through it, and you can drag it somewhere else while the Esc menu
 is open.
 
+**Hover a row to see the item card.** Stats of the item at the quality you
+picked, side by side with what you are wearing in the same slot: green with a
+`+` where it is better, red with a `−` where it is worse, `=` where they match.
+Damage, armour, block, resistances, durability, weight, movement penalty - the
+same numbers the game shows, computed by the game itself. Below them, the recipe
+with what is already in your backpack. For things you cannot wear, the card is
+just the recipe. Comparison can be switched off in Settings.
+
 ### Spoiler-free by default
 
 A planner opened in your first hour would otherwise retell the whole game: a
@@ -118,6 +126,8 @@ because UI scale is adjustable.
 | `Pin` | `OffsetY` | `268` | Distance from the top or bottom; the default clears the minimap |
 | `Pin` | `RefreshSeconds` | `1` | How often the remaining amounts are recounted |
 | `Pin` | `MaxRows` | `8` | How many materials to list before collapsing the rest |
+| `Tooltip` | `Enabled` | `true` | Show the item card when hovering a row in the planner |
+| `Tooltip` | `Compare` | `true` | Compare the hovered item with what you have equipped |
 | `Debug` | `SelfTest` | `false` | Dump the parsed catalogue to the log on world load |
 
 The three `Station` keys exist for repair rather than taste: the crafting panel
@@ -276,15 +286,6 @@ are as many `Player` instances as there are people on the server, and an
 earlier version of this suppressed *other people's* emotes.
 
 ## Known gaps
-
-**Cooking station preference.** `GameData.Put` takes the first conversion it
-finds, and prefab order in `ZNetScene` is not guaranteed. Meat cooks on both
-the plain rack and the iron one, so without an explicit preference table
-Meadows boar may end up asking for the iron one. The metals already have such a
-table, `GameData.Prefer`, mirrored in the site's pipeline: iron from scrap,
-copper from ore. There is no marker in the data saying which rule is right —
-that is always a human decision, so both sides keep it written down with the
-reasoning.
 
 **Frost Foundry.** 28 Deep North casting conversions are shadowed by ordinary
 recipes. For bronze that rule is obviously correct; here it is not, and it can

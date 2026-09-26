@@ -36,9 +36,9 @@ The package icon, `icon.png`, is rasterised from `icon.svg` by `make_icon.py`.
 Both are the author's own drawing, shared with the ForgePlanner website so that
 the project looks the same wherever it is listed; no game art is involved.
 
-The only other images bundled with this mod are the five in `art/`: four link icons
-(a globe, the GitHub mark, the Nexus Mods mark and the Steam mark), recoloured
-from public domain sources, and a direction arrow drawn for this project. The
-GitHub, Nexus Mods and Steam marks are trademarks of their respective owners
+The only other images bundled with this mod are the four in `art/`: three link icons
+(a globe, the Nexus Mods mark and the Steam mark), recoloured from public domain
+sources, and a direction arrow drawn for this project. The Nexus Mods and Steam
+marks are trademarks of their respective owners
 and are used here only to point at this project's pages on those sites; no
 endorsement is implied.

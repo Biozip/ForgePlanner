@@ -40,6 +40,7 @@ public class ForgeplanPlugin : BaseUnityPlugin {
     ConfigEntry<float> _pinX, _pinY, _pinInterval;
     ConfigEntry<int> _pinRows;
     ConfigEntry<bool> _cardEnabled, _cardCompare;
+    ConfigEntry<KeyCode> _cardDetails;
 
     Harmony _harmony;
 
@@ -134,8 +135,16 @@ public class ForgeplanPlugin : BaseUnityPlugin {
         _cardCompare = Config.Bind("Tooltip", "Compare", true,
             "Compare the hovered item with what you have equipped in the same "
             + "slot. Off shows the item's own stats only.");
+        // Не KeyboardShortcut, а одна клавиша: её держат, а не нажимают, и
+        // модификаторы тут ни к чему.
+        _cardDetails = Config.Bind("Tooltip", "DetailsKey", KeyCode.LeftAlt,
+            "Hold this key over the item card to see the full text of the set "
+            + "bonus and the item's effect in place of the recipe. With LeftAlt "
+            + "the right Alt works too.");
         ItemCard.Enabled = _cardEnabled.Value;
         ItemCard.Compare = _cardCompare.Value;
+        ItemCard.DetailsKey = _cardDetails.Value;
+        _cardDetails.SettingChanged += (o, e) => ItemCard.DetailsKey = _cardDetails.Value;
 
         _selfTest = Config.Bind("Debug", "SelfTest", false,
             "On entering a world, build the catalogue and dump the conversion "

@@ -60,14 +60,19 @@ public class ItemDef {
         get {
             var pick = Ui.L.Ru ? Ru : En;
             if (!string.IsNullOrEmpty(pick)) return pick;
-            // Игра для части построек не знает названия вовсе и возвращает
-            // сырой токен — «[piece_darkwoodbeam67]». Второй язык читается
-            // лучше квадратных скобок; если и его нет, показывать всё равно
-            // нечего.
-            if (!string.IsNullOrEmpty(Name) && Name[0] != '[') return Name;
+            // Игра для части построек не знает названия и возвращает сырой
+            // токен — «[piece_darkwoodbeam67]». Второй язык читается лучше
+            // квадратных скобок. Вещи без названия ни на одном языке в
+            // каталог не попадают вовсе (см. DropNameless).
+            if (!Nameless(Name)) return Name;
             var other = Ui.L.Ru ? En : Ru;
             return string.IsNullOrEmpty(other) ? Name : other;
         }
+    }
+
+    /// <summary>Игра вернула токен в скобках: перевода у неё нет.</summary>
+    public static bool Nameless(string name) {
+        return string.IsNullOrEmpty(name) || name[0] == '[';
     }
 
     /// <summary>Рецепт не настоящий, а переписанный из превращения станка.
@@ -197,7 +202,7 @@ public static class GameData {
         StationIcons.Clear(); TierMemo.Clear();
         RecipeAmounts.Clear(); KilnRule = null; Mirrored = 0;
         SkippedUpgraders = 0; Pieces = 0; Ready = false;
-        SkippedPlanting = 0; SkippedServings = 0;
+        SkippedPlanting = 0; SkippedServings = 0; SkippedNameless = 0;
     }
 
     /// <summary>
@@ -294,12 +299,13 @@ public static class GameData {
             it.En = Names.Get(Names.En, slug);
             it.Haystack = (it.Name + " " + slug + " " + it.Ru + " " + it.En).ToLowerInvariant();
         }
+        DropNameless();
         Ready = true;
         ForgeplanPlugin.Log.LogInfo(string.Format(
             "каталог собран за {0} мс: {1} предметов, из них {2} построек; "
-            + "отброшено: посадок {3}, подач на стол {4}",
+            + "отброшено: посадок {3}, подач на стол {4}, без названия {5}",
             clock.ElapsedMilliseconds, Items.Count, Pieces,
-            SkippedPlanting, SkippedServings));
+            SkippedPlanting, SkippedServings, SkippedNameless));
         return true;
     }
 
@@ -486,6 +492,34 @@ public static class GameData {
 
     /// <summary>Сколько «поставить готовую еду на стол» отброшено.</summary>
     public static int SkippedServings;
+
+    /// <summary>Сколько вещей отброшено за отсутствием названия.</summary>
+    public static int SkippedNameless;
+
+    /// <summary>
+    /// Убрать вещи, у которых нет названия ни в игре, ни в таблице с сайта.
+    ///
+    /// Такие есть: игра 1.0.16 кладёт в меню молотка балку с токеном
+    /// `$piece_darkwoodbeam67` без перевода. В каталоге она вставала первой
+    /// строкой вкладки «Всё» — квадратная скобка сортируется раньше букв — и
+    /// выглядела поломкой мода. Сайт такие вещи тоже не показывает: его
+    /// выгрузка берёт только то, у чего есть название.
+    /// </summary>
+    static void DropNameless() {
+        var gone = new List<string>();
+        foreach (var kv in Items) {
+            var it = kv.Value;
+            if (ItemDef.Nameless(it.Name) && string.IsNullOrEmpty(it.Ru)
+                                  && string.IsNullOrEmpty(it.En))
+                gone.Add(kv.Key);
+        }
+        foreach (var id in gone) {
+            if (Items[id].Group == Kind.Piece) Pieces--;
+            Items.Remove(id);
+            ForgeplanPlugin.Log.LogInfo("без названия, пропущено: " + id);
+        }
+        SkippedNameless = gone.Count;
+    }
 
     static void IndexPieces() {
         var buildable = Buildable();

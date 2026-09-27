@@ -2,6 +2,26 @@
 
 Русская версия с подробностями — `Versions.md` в репозитории.
 
+## 1.3.0
+
+- Column labels above the plan: Item, Item level, Quantity.
+- Level buttons, the quantity counter and the delete button are now separate
+  blocks with space between them. Items without quality levels show a dash in
+  place of the buttons, so the columns stay lined up from row to row.
+- The delete button is muted and turns red under the cursor, so it no longer
+  looks like one more counter button next to `+`.
+- The Info panel links to the mod's pages on Thunderstore and Hexium, next to
+  the website and Nexus Mods.
+- Hold Alt over the item card to read the set bonus and the item's effect in
+  full, in place of the recipe, with how many pieces of the set you wear. A
+  different bonus on what you wear is listed too. The key is
+  `[Tooltip] DetailsKey`.
+- The item card is opaque now; the window behind it no longer shows through.
+- The equipped item in the card is named in the window's language, not the
+  game's.
+- Pieces the game has no name for (such as `[piece_darkwoodbeam67]`) are left
+  out of the catalogue instead of heading the All tab.
+
 ## 1.2.0
 
 - **Hover a row to see the item card.** The stats of the item at the quality

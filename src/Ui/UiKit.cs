@@ -559,11 +559,12 @@ public static class UiKit {
     }
 
     /// <summary>Тонкая разделительная черта.</summary>
-    public static void Separator(Transform parent) {
+    public static RectTransform Separator(Transform parent) {
         var rt = Row(parent, "sep", 1f);
         var img = rt.gameObject.AddComponent<Image>();
         img.color = Line;
         img.raycastTarget = false;
+        return rt;
     }
 
     /// <summary>Иконка предмета. Если её нет — прозрачное место того же

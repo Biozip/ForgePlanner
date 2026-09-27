@@ -63,9 +63,11 @@ public static class L {
     public static string CardHint {
         get {
             return T("Hover a row to see the item's stats and recipe. Compared "
-                     + "with what you wear: green is better, red is worse.",
+                     + "with what you wear: green is better, red is worse. "
+                     + "Hold Alt for set bonuses and effects.",
                      "Наведите на строку — появятся характеристики и рецепт. "
-                     + "Сравнение с надетым: зелёное лучше, красное хуже.");
+                     + "Сравнение с надетым: зелёное лучше, красное хуже. "
+                     + "Alt раскрывает бонус комплекта и эффект.");
         }
     }
 
@@ -98,6 +100,26 @@ public static class L {
     public static string StWeight { get { return T("Weight", "Вес"); } }
     public static string StEffect { get { return T("Effect", "Эффект"); } }
     public static string StSet { get { return T("Set bonus", "Комплект"); } }
+
+    /* Описания за Alt. */
+    public static string DetWorn(int worn, int size) {
+        return T("You wear " + worn + " of " + size, "Надето " + worn + " из " + size);
+    }
+    public static string DetOf(string item) {
+        return T("On what you wear: " + item, "У надетого: " + item);
+    }
+    public static string DetNoText {
+        get { return T("The game gives no description.", "Игра описания не даёт."); }
+    }
+    /// <summary>Подсказка в заголовке рецепта: что откроется по клавише.</summary>
+    public static string DetHint(string key, bool set, bool effect) {
+        if (set && effect) return T("Hold " + key + ": details", "Зажмите " + key + " — подробности");
+        if (set) return T("Hold " + key + ": set bonus", "Зажмите " + key + " — бонус комплекта");
+        return T("Hold " + key + ": effect", "Зажмите " + key + " — эффект");
+    }
+    public static string DetBack(string key) {
+        return T("Release " + key + ": recipe", "Отпустите " + key + " — рецепт");
+    }
 
     public static string ModVeryWeak { get { return T("Very weak", "Очень уязвим"); } }
     public static string ModWeak { get { return T("Weak", "Уязвим"); } }
@@ -202,6 +224,10 @@ public static class L {
     public static string Other { get { return T("Other", "Прочее"); } }
 
     public static string CraftPlan { get { return T("Craft plan", "План крафта"); } }
+    /* Подписи столбцов над планом. */
+    public static string ColItem { get { return T("Item", "Предмет"); } }
+    public static string ColLevel { get { return T("Item level", "Уровень предмета"); } }
+    public static string ColQty { get { return T("Quantity", "Количество"); } }
     public static string TotalItems { get { return T("Items total: ", "Всего предметов: "); } }
     public static string ToGather { get { return T("To gather", "Нужно собрать"); } }
     public static string Processing { get { return T("Processing", "Переработка"); } }

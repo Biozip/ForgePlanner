@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
-"""Собирает zip для Thunderstore.
+"""Собирает два архива: для Thunderstore (он же для Hexium) и для Nexus.
 
     tools/venv/Scripts/python.exe mod/package.py
 
-Что кладётся в архив:
+dist/ForgePlanner-<v>.zip — Thunderstore и Hexium:
 
-    manifest.json        собирается здесь, из VERSION
+    manifest.json        собирается здесь, из VERSION и store/short-description.txt
     icon.png             256x256, нарисован make_icon.py
-    README.md            pack/README.md, английский — площадка международная
+    README.md            store/page.md, картинки — адресами из галереи Nexus
+                         (store/pages.py); без адресов сборка откажется
     CHANGELOG.md         pack/CHANGELOG.md
     LICENSE
     plugins/Forgeplan.dll
+
+dist/nexus/ForgePlanner-<v>.zip — Nexus: один файл, BepInEx/plugins/Forgeplan.dll,
+чтобы архив распаковывался прямо в папку игры и Vortex знал, куда его класть.
+Манифест Thunderstore там только путал бы скачавшего.
 
 Номер версии нигде не дублируется руками: он живёт в VERSION, оттуда попадает в
 [BepInPlugin] при сборке и в manifest.json здесь. Как и сборка, упаковка
@@ -34,12 +39,13 @@ DLL = os.path.join(BASE, 'bin', 'Release', 'Forgeplan.dll')
 NAME = 'ForgePlanner'
 SITE = 'https://forgeplanner.pages.dev'
 BEPINEX = 'denikson-BepInExPack_Valheim-5.4.2350'
-# Thunderstore: одна строка, не длиннее 250 знаков.
-DESCRIPTION = (
-    'In-game crafting planner. Press F7, build a shopping list, and see the '
-    'ore, wood, coal and smelting time it takes. Reads recipes, upgrade costs '
-    'and names from your running game, so the numbers survive patches.'
-)
+sys.path.insert(0, os.path.join(BASE, 'store'))
+import pages  # noqa: E402
+
+# Одна строка, не длиннее 250 знаков: описание в манифесте Thunderstore и
+# summary на Nexus. Живёт в store/, чтобы не писать её дважды.
+DESCRIPTION = open(os.path.join(BASE, 'store', 'short-description.txt'),
+                   encoding='utf-8-sig').read().strip()
 
 
 def read(path):
@@ -84,8 +90,8 @@ def main():
     os.makedirs(DIST, exist_ok=True)
     out = os.path.join(DIST, f'{NAME}-{v}.zip')
 
+    readme = pages.readme()
     files = [
-        ('README.md', os.path.join(BASE, 'pack', 'README.md')),
         ('CHANGELOG.md', os.path.join(BASE, 'pack', 'CHANGELOG.md')),
         ('LICENSE', os.path.join(BASE, 'LICENSE')),
         ('icon.png', icon),
@@ -94,6 +100,7 @@ def main():
 
     with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as z:
         z.writestr('manifest.json', json.dumps(manifest, ensure_ascii=False, indent=2))
+        z.writestr('README.md', readme)
         for inside, path in files:
             if not os.path.exists(path):
                 sys.exit(f'нет файла: {path}')
@@ -103,6 +110,12 @@ def main():
     with zipfile.ZipFile(out) as z:
         for info in z.infolist():
             print(f'  {info.file_size:8}  {info.filename}')
+
+    nexus = os.path.join(DIST, 'nexus', f'{NAME}-{v}.zip')
+    os.makedirs(os.path.dirname(nexus), exist_ok=True)
+    with zipfile.ZipFile(nexus, 'w', zipfile.ZIP_DEFLATED) as z:
+        z.write(DLL, 'BepInEx/plugins/Forgeplan.dll')
+    print(f'{nexus}  ({os.path.getsize(nexus)} байт)')
 
 
 if __name__ == '__main__':

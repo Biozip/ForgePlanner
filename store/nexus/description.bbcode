@@ -1,0 +1,172 @@
+[size=5][b]ForgePlanner[/b][/size]
+
+A crafting planner that lives inside Valheim. Press [b]F7[/b], build a shopping list, and see exactly how much ore, wood and hide you need — including the smelting, the coal, and which station you have to stand at.
+
+Everything is read from your running game: recipes, upgrade costs, conversions, item names, icons, trader price lists and your language. Nothing about the game is hardcoded, so the numbers keep matching after a patch instead of going quietly stale.
+
+[line]
+
+[size=4][b]What it does[/b][/size]
+
+[list]
+[*][b]Plan several items at once.[/b] Three bronze picks and two maces, not one item at a time. Press [b]+[/b] or double-click a row to add it.[/*]
+[*][b]Quality levels 1–4.[/b] The upgrade surcharge is taken from the game, not guessed. Valheim doubles it per level (1, 2, 4), which is where most spreadsheets and wikis get it wrong.[/*]
+[*][b]Raw materials or recipe materials.[/b] Either break everything down to ore, wood and hide, or stop at what the workbench actually asks for.[/*]
+[*][b]Smelting included.[/b] Coal, smelting time and how many loads each station needs.[/*]
+[*][b]Counts what you already have.[/b] Your backpack plus nearby chests.[/*]
+[*][b]Tells you which stations you need[/b] — and whether one is standing nearby, how far, in which direction, and at what level. If the one you have is too low, it says which level the plan wants. If there is none, one button adds the station itself to the plan.[/*]
+[*][b]Names the trader for anything you cannot find.[/b] Some materials drop nowhere; the line says who sells it and for how much.[/*]
+[*][b]Buildings too.[/b] Walls, floors, workstations — the hammer menu is in the same catalogue.[/*]
+[*][b]An item card on hover[/b], compared with what you wear. See below.[/*]
+[*][b]Pin the plan[/b] and keep it on screen while you gather. See below.[/*]
+[*][b]Filter by biome[/b], with the same colours as the website.[/*]
+[*][b]Search and eight tabs:[/b] All, plus Weapons, Armour, Tools, Food, Materials, Buildings and Other. Search works in English and Russian whatever language the game is running in.[/*]
+[*][b]English or Russian window[/b], switched with one button.[/*]
+[/list]
+
+Each row of the plan is the item, its quality level and how many; the columns are labelled above the list. Below it: everything the plan costs, the stations it needs with distance and direction, and what has to go through a smelter or a kiln first.
+
+[line]
+
+[size=4][b]The item card[/b][/size]
+
+[b]Hover a row to see the item card.[/b] Stats of the item at the quality you picked, side by side with what you are wearing in the same slot: green with a [b]+[/b] where it is better, red with a [b]−[/b] where it is worse, [b]=[/b] where they match. Damage, armour, block, resistances, durability, weight, movement penalty — the same numbers the game shows, computed by the game itself. Below them, the recipe with what is already in your backpack. For things you cannot wear, the card is just the recipe. Comparison can be switched off in Settings.
+
+[b]Hold Alt for the full text.[/b] The card names a set bonus or an effect — [b]Sneaky (4)[/b] — and some of those descriptions run to several lines. Hold [b]Alt[/b] and the recipe gives way to the whole text, the same one the game's own tooltip shows, with how many pieces of the set you already wear. If the item you wear has a different bonus, it is there too, so you see what you would give up. The text comes in the game's language.
+
+[line]
+
+[size=4][b]Pin the plan[/b][/size]
+
+[b]Pin the plan and close the window.[/b] A copy of it stays on screen in a small panel and fills in as you gather — [b]1 / 10[/b], so you can see both how far along you are and how far there is to go. It counts your backpack only: the window counts nearby chests as well, but out in the field the question is whether you have it on you, not whether it is somewhere at home. It is a copy on purpose: wiping the plan to price up something else does not wipe what you pinned. Clicks pass straight through it, and you can drag it somewhere else while the Esc menu is open.
+
+[line]
+
+[size=4][b]Made for a group[/b][/size]
+
+Alone the sums are small. On a shared server they are the boring part of the evening: how much iron the base still owes for four sets of armour, how much coal that turns into, how many trips to the smelter that means, and whether anyone remembered to bring fine wood.
+
+Plan the whole order in one go — four maces, three shields, two sets of armour — stand next to the storage, and the window subtracts what is already there. It counts your own backpack and every chest within range, so a base's shared storage is read once for the whole plan instead of being tallied chest by chest on a second monitor.
+
+[line]
+
+[size=4][b]A wiki you do not have to alt-tab to[/b][/size]
+
+It does not replace the Valheim wiki and does not try to: no lore, no drop tables, no strategy, no pictures of bosses.
+
+What it does carry is the part you actually look up in the middle of a session. What a thing costs. What the same thing costs at quality 2, 3 and 4. Which station it needs and at which level. What has to go through a smelter or a kiln first, and how long that takes. Which biome a material comes from. How the item compares with what you wear. And, for the handful that drop nowhere at all, which trader sells it and for how many coins.
+
+A trimmed wiki, then — but the trimmed part is the part you were going to search for anyway, and this one is read from your own installation, so it cannot fall behind a game patch the way a wiki page can.
+
+[line]
+
+[size=4][b]Spoiler-free by default[/b][/size]
+
+A planner opened in your first hour would otherwise retell the whole game: a thousand entries with flametal weapons at the top. So a biome stays locked until the boss before it falls. Meadows, Black Forest and Ocean are always open — you get there on your own.
+
+Locked biomes dim rather than disappear, and the whole thing is one switch in Settings if you would rather see everything. If you have already beaten the bosses, you lose nothing: it is all open.
+
+The victory keys are read from the boss prefabs themselves, so the mod does not carry a list of boss names that a future update could quietly invalidate.
+
+[line]
+
+[size=4][b]Usage[/b][/size]
+
+Press [b]F7[/b] in a loaded world, or use the [b]ForgePlanner[/b] button on any crafting station's panel. The cursor is released while the window is open, and the game behaves exactly as it does when you press [b]E[/b] at a workbench: no swinging, building, walking or hotbar switching by accident. Press [b]F7[/b] or [b]Esc[/b] to close.
+
+[line]
+
+[size=4][b]Installation[/b][/size]
+
+With a mod manager (r2modman, Thunderstore Mod Manager, Vortex), install it like any other mod. By hand:
+
+[list=1]
+[*]Install [url=https://thunderstore.io/c/valheim/p/denikson/BepInExPack_Valheim/]BepInExPack Valheim[/url] 5.4.2350 or newer.[/*]
+[*]Drop [b]Forgeplan.dll[/b] into [b]BepInEx/plugins/[/b].[/*]
+[/list]
+
+Client-side only. It does not touch saves, world data or networking, so it is safe to add to an existing world and safe to remove again — uninstalling leaves nothing behind but the config file.
+
+[line]
+
+[size=4][b]Configuration[/b][/size]
+
+[b]BepInEx/config/dev.forgeplanner.forgeplan.cfg[/b], written on first run.
+
+[code]
+[General]
+  Open            F7           Hotkey that opens the planner
+  Russian         false        Window labels in Russian
+  HideUnreached   true         Lock biomes until their boss is beaten
+
+[Stock]
+  CountChests     true         Count nearby chests, not just your backpack
+  Radius          20           How far a chest counts as yours, in metres
+
+[Station]
+  Button          true         Show the ForgePlanner button on station panels
+  Corner          BottomRight  Which side of the panel the button's shelf sits on
+  OffsetX         14           Shelf offset from the panel edge, in points
+  DropDown        0            How far below the panel edge to drop the shelf
+
+[Pin]
+  Enabled         true         Keep the pinned plan on screen after the planner is closed
+  Corner          TopRight     Which corner of the screen the pinned list sits in
+  OffsetX         42           Distance from the side of the screen; written by dragging the panel
+  OffsetY         268          Distance from the top or bottom; the default clears the minimap
+  RefreshSeconds  1            How often the remaining amounts are recounted
+  MaxRows         8            How many materials to list before collapsing the rest
+
+[Tooltip]
+  Enabled         true         Show the item card when hovering a row
+  Compare         true         Compare the hovered item with what you have equipped
+  DetailsKey      LeftAlt      Hold it over the card for the full set bonus and effects; None turns it off
+
+[Debug]
+  SelfTest        false        Dump the parsed catalogue to the log on world load[/code]
+
+The [b]Station[/b] keys are there for repair rather than taste: the crafting panel belongs to the game, and a future Valheim update may move it. If the button ends up in the wrong place, it can be put back without waiting for a new release of the mod.
+
+[line]
+
+[size=4][b]Companion website[/b][/size]
+
+[url=https://forgeplanner.pages.dev]forgeplanner.pages.dev[/url] runs the same calculation in a browser, for planning before you launch the game.
+
+The two are kept honest about each other: the mod reads the live game, the site reads extracted game data, and a parity harness compares the catalogue, conversions and per-level costs entry by entry. Four real calculation bugs were found that way in a single day — potential idols counted as ingredients, bronze taken from scrap instead of ore, a five-ingot recipe beating the one-ingot one, and a wrong upgrade curve.
+
+Progression is the one thing the site cannot do: it does not know which bosses you have beaten.
+
+[line]
+
+[size=4][b]Requirements[/b][/size]
+
+[list]
+[*]Valheim 1.0.16 (tested against it)[/*]
+[*][url=https://thunderstore.io/c/valheim/p/denikson/BepInExPack_Valheim/]BepInExPack Valheim[/url] 5.4.2350 or newer[/*]
+[/list]
+
+[line]
+
+[size=4][b]Where to find it[/b][/size]
+
+[list]
+[*]Website: [url=https://forgeplanner.pages.dev]forgeplanner.pages.dev[/url][/*]
+[*]Thunderstore: [url=https://thunderstore.io/c/valheim/p/Biozip/ForgePlanner/]Biozip/ForgePlanner[/url][/*]
+[*]Nexus Mods: [url=https://www.nexusmods.com/valheim/mods/3879]ForgePlanner[/url][/*]
+[*]Hexium: [url=https://valheim.hexium.gg/mods/Biozip/ForgePlanner]Biozip/ForgePlanner[/url][/*]
+[/list]
+
+[line]
+
+[size=4][b]Licence[/b][/size]
+
+MIT. Not affiliated with Iron Gate Studio or Coffee Stain Publishing.
+
+The window borrows the game's own font, panel and button art at runtime, so it matches your UI scale and your language. It ships no Valheim assets of its own — the few icons it does carry are its own, and [b]LICENSE[/b] says which.
+
+[line]
+
+[size=4][b]Support[/b][/size]
+
+The mod and the website are free and stay free: no ads, no accounts, no paid features, nothing held back for supporters. If ForgePlanner has saved you a few trips to the wiki and you feel like buying me a coffee, there is a [url=https://boosty.to/biozip]Boosty[/url] page.

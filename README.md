@@ -9,130 +9,36 @@ conversions, item names, icons, trader price lists and your language. Nothing
 about the game is hardcoded, so the numbers keep matching after a patch instead
 of going quietly stale.
 
-Latest release: **1.0.0**. Requires
+Current release: `VERSION`, history in `Versions.md` (Russian, with reasons)
+and `pack/CHANGELOG.md` (English, short). Requires
 [BepInExPack_Valheim](https://thunderstore.io/c/valheim/p/denikson/BepInExPack_Valheim/)
-(denikson) — BepInEx 5.4.x. Tested against Valheim 1.0.15.
+(denikson) — BepInEx 5.4.x. Tested against Valheim 1.0.16.
 
 There is a companion website, [forgeplanner.pages.dev](https://forgeplanner.pages.dev),
 which runs the same calculation in a browser. The two are kept honest about
 each other; see [Relationship to the website](#relationship-to-the-website).
 
-![The planner open in game](media/01-planner.png)
+![The planner open in game](media/01-in-game.png)
 
-## What it does
+## For players
 
-- **Plan several items at once.** Three bronze picks and two maces, not one
-  item at a time. Double-click a catalogue row to add it.
-- **Quality levels 1–4.** The upgrade surcharge comes from the game, not from a
-  guess. Valheim doubles it per level (1, 2, 4), which is where most
-  spreadsheets and wikis get it wrong.
-- **Raw materials or recipe materials.** Either break everything down to ore,
-  wood and hide, or stop at what the workbench actually asks for.
-- **Smelting included.** Coal, smelting time, and how many loads each station
-  needs.
-- **Counts what you already have.** Your inventory plus nearby chests.
-- **Tells you which stations the plan needs** — whether one is standing nearby,
-  how far, in which direction, and at what level. If yours is too low, it says
-  which level is wanted. If there is none, one button adds the station itself
-  to the plan.
-- **Names the trader for anything that drops nowhere,** with the price.
-- **Buildings too.** Walls, floors, workstations — the hammer menu is in the
-  same catalogue.
-- **Filter by biome,** with the same colours as the website.
-- **Search in English and Russian,** whichever language the game is running in.
+What the mod does, how to install it and the full configuration table are
+written once, in [`store/page.md`](store/page.md). That file *is* the page on
+Thunderstore, Hexium and Nexus: `package.py` ships it as the archive's README,
+`store/pages.py` turns it into BBCode for Nexus. It is not repeated here on
+purpose — three copies of the same text drifted apart within three releases.
+What is where in `store/` is in [`store/README.md`](store/README.md);
+screenshots are in `media/`, listed in [`store/gallery.md`](store/gallery.md).
 
-The window borrows the game's own font, panel and button art at runtime, so it
-matches your UI scale and your language.
+Two design notes that do not belong on a store page:
 
-![The plan and the totals](media/02-plan-totals.png)
-
-Quality levels on the left of each row; then everything the plan costs, the
-stations it needs with distance and direction, and what has to go through a
-smelter or a kiln first.
-
-**Pin the plan and close the window.** A copy of it stays on screen in a small
-panel and fills in as you gather - `1 / 10`, so you can see both how far along
-you are and how far there is to go. It counts your backpack only: the window
-counts nearby chests as well, but out in the field the question is whether you
-have it on you, not whether it is somewhere at home. It is a copy on purpose:
-wiping the plan to price up something else does not wipe what you pinned. Clicks
-pass straight through it, and you can drag it somewhere else while the Esc menu
-is open.
-
-**Hover a row to see the item card.** Stats of the item at the quality you
-picked, side by side with what you are wearing in the same slot: green with a
-`+` where it is better, red with a `−` where it is worse, `=` where they match.
-Damage, armour, block, resistances, durability, weight, movement penalty - the
-same numbers the game shows, computed by the game itself. Below them, the recipe
-with what is already in your backpack. For things you cannot wear, the card is
-just the recipe. Comparison can be switched off in Settings.
-
-### Spoiler-free by default
-
-A planner opened in your first hour would otherwise retell the whole game: a
-thousand entries with flametal weapons at the top. So a biome stays locked
-until the boss before it falls. Meadows, Black Forest and Ocean are always
-open — you get there on your own.
-
-Locked biomes dim rather than disappear; a vanishing row of buttons reads as a
-fault. It is one switch in Settings if you would rather see everything, and if
-you have already beaten the bosses you lose nothing.
-
-The victory keys are read from the boss prefabs themselves
-(`Character.m_defeatSetGlobalKey`) at world load, so the mod carries no list of
-boss names for a future update to invalidate silently. Only one thing is fixed:
-which victory opens which biome. That is knowledge about the game, not about
-its files, and it cannot be derived from the data. A boss whose key the mod does
-not recognise is logged by name.
-
-![Settings](media/03-settings.png)
-
-## Installing
-
-1. Install [BepInExPack_Valheim](https://thunderstore.io/c/valheim/p/denikson/BepInExPack_Valheim/).
-2. Drop `Forgeplan.dll` into `BepInEx/plugins/`.
-3. Press **F7** in a loaded world, or use the **ForgePlanner** button on any
-   crafting station's panel.
-
-The cursor is released while the window is open, and the game behaves exactly
-as it does when you press `E` at a workbench: no swinging, building, walking or
-hotbar switching by accident. Press **F7** or **Esc** to close.
-
-![The button on a station panel](media/05-station-button.png)
-
-The button sits on a shelf of its own below the crafting panel. A third tab
-next to Craft and Upgrade is not possible: the game places those tabs by
-numbers rather than layout, and a third one lands differently for everyone
-because UI scale is adjustable.
-
-## Configuration
-
-`BepInEx/config/dev.forgeplanner.forgeplan.cfg`, written on first run.
-
-| Section | Key | Default | Meaning |
-| --- | --- | --- | --- |
-| `General` | `Open` | `F7` | Hotkey that opens the planner |
-| `General` | `Russian` | `false` | Window labels in Russian |
-| `General` | `HideUnreached` | `true` | Lock biomes until their boss is beaten |
-| `Stock` | `CountChests` | `true` | Count nearby chests, not just your backpack |
-| `Stock` | `Radius` | `20` | How far a chest counts as yours, in metres |
-| `Station` | `Button` | `true` | Show the ForgePlanner button on station panels |
-| `Station` | `Corner` | `BottomRight` | Which side of the panel the button's shelf sits on |
-| `Station` | `OffsetX` | `14` | Shelf offset from the panel edge, in points |
-| `Station` | `DropDown` | `0` | How far below the panel edge to drop the shelf |
-| `Pin` | `Enabled` | `true` | Keep pinned materials on screen after the planner is closed |
-| `Pin` | `Corner` | `TopRight` | Which corner of the screen the pinned list sits in |
-| `Pin` | `OffsetX` | `42` | Distance from the side of the screen; written by dragging the panel |
-| `Pin` | `OffsetY` | `268` | Distance from the top or bottom; the default clears the minimap |
-| `Pin` | `RefreshSeconds` | `1` | How often the remaining amounts are recounted |
-| `Pin` | `MaxRows` | `8` | How many materials to list before collapsing the rest |
-| `Tooltip` | `Enabled` | `true` | Show the item card when hovering a row in the planner |
-| `Tooltip` | `Compare` | `true` | Compare the hovered item with what you have equipped |
-| `Debug` | `SelfTest` | `false` | Dump the parsed catalogue to the log on world load |
-
-The three `Station` keys exist for repair rather than taste: the crafting panel
-belongs to the game, and a future Valheim update may move it. If the button
-ends up in the wrong place it can be put back without a new release.
+- **The station button sits on a shelf of its own** below the crafting panel.
+  A third tab next to Craft and Upgrade is not possible: the game places those
+  tabs by numbers rather than layout, and a third one lands differently for
+  everyone because UI scale is adjustable.
+- **The `Station` keys exist for repair rather than taste:** the crafting panel
+  belongs to the game, and a future Valheim update may move it. If the button
+  ends up in the wrong place it can be put back without a new release.
 
 ## Where the data comes from
 
@@ -209,11 +115,13 @@ more than the convenience.
 ```bash
 python make_icon.py     # icon.png, 256x256
 dotnet build -c Release
-python package.py       # dist/ForgePlanner-X.Y.Z.zip
+python package.py       # dist/ForgePlanner-X.Y.Z.zip and dist/nexus/…
 ```
 
-The archive holds `manifest.json`, the icon, the English `pack/README.md` and
-`pack/CHANGELOG.md`, `LICENSE` and the plugin. The version number is not
+The Thunderstore archive (Hexium takes the same one) holds `manifest.json`, the
+icon, `store/page.md` as `README.md` with the image links filled in from
+`store/nexus/images.json`, `pack/CHANGELOG.md`, `LICENSE` and the plugin. The
+Nexus archive holds only `BepInEx/plugins/Forgeplan.dll`. The version number is not
 duplicated anywhere by hand: `VERSION` → `Version.g.cs` → `[BepInPlugin]`, and
 `VERSION` → `manifest.json`. Both building and packaging refuse to run if
 `VERSION` disagrees with the top entry of `Versions.md` — a release with no line
@@ -320,7 +228,7 @@ summary that ships with each release is `pack/CHANGELOG.md`.
 Releases before 1.0.0 predate this repository and exist only as entries in
 those files.
 
-![About](media/04-about.png)
+![About](media/08-about.png)
 
 ## Licence
 

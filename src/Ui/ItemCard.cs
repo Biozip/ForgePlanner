@@ -40,6 +40,8 @@ public class ItemCard {
     public static bool Enabled = true;
     /// <summary>Сравнивать ли с надетым. Выключено — одна карточка без цвета.</summary>
     public static bool Compare = true;
+    /// <summary>Клавиша, по которой рецепт сменяется описаниями. Из конфига.</summary>
+    public static KeyCode DetailsKey = KeyCode.LeftAlt;
 
     const float CardWidth = 300f;
     const float RowHeight = 20f;
@@ -48,11 +50,14 @@ public class ItemCard {
     static readonly Color Good = new Color(0.56f, 0.86f, 0.42f);
     static readonly Color Bad = new Color(0.94f, 0.44f, 0.36f);
     static readonly Color Back = new Color(0.08f, 0.07f, 0.06f, 0.94f);
+    static readonly Color Solid = new Color(0.06f, 0.055f, 0.05f, 0.97f);
 
     GameObject _root;
     RectTransform _rt, _cards;
     Column _left, _right;
     RecipeBox _recipe;
+    DetailsBox _details;
+    bool _hasDetails, _shownAlt;
 
     // откуда брать, что показывать
     GameObject _owner;
@@ -109,10 +114,12 @@ public class ItemCard {
             ? ItemStats.Equipped(Player.m_localPlayer, data.m_shared.m_itemType) : null;
 
         if (_root == null) Build();
+        bool alt = Held();
         bool changed = id != _shownId || q != _shownQ || Compare != _shownCompare
             || eq != _shownEq || (eq != null && eq.m_quality != _shownEqQ);
         if (changed) {
             Fill(it, data, q, wear, eq);
+            _shownAlt = !alt;   // ниже переключит блоки под текущее состояние
             _shownId = id;
             _shownQ = q;
             _shownCompare = Compare;
@@ -124,12 +131,45 @@ public class ItemCard {
             _recipe.Show(it, q);
             _nextRecount = Time.unscaledTime + 1f;
         }
+        if (alt != _shownAlt) {
+            // Рецепт и описания — на одном месте: блок под характеристиками
+            // уже занимает всю ширину обеих карточек, и длинный текст не
+            // переносится по словам в узкой колонке.
+            bool open = alt && _hasDetails;
+            _recipe.Visible(!open);
+            _details.Visible(open);
+            _shownAlt = alt;
+            Rebuild();
+        }
 
         if (!_root.activeSelf) {
             _root.SetActive(true);
             _root.transform.SetAsLastSibling();
         }
         Place();
+    }
+
+    static bool Held() {
+        if (DetailsKey == KeyCode.None) return false;
+        if (Input.GetKey(DetailsKey)) return true;
+        // Alt справа и слева для игрока одна клавиша.
+        return DetailsKey == KeyCode.LeftAlt && Input.GetKey(KeyCode.RightAlt);
+    }
+
+    static string KeyName(KeyCode k) {
+        switch (k) {
+            case KeyCode.LeftAlt: case KeyCode.RightAlt: return "Alt";
+            case KeyCode.LeftControl: case KeyCode.RightControl: return "Ctrl";
+            case KeyCode.LeftShift: case KeyCode.RightShift: return "Shift";
+        }
+        return k.ToString();
+    }
+
+    /// <summary>Текст с переносом узнаёт свою высоту только от ширины, а
+    /// ширина приходит с первого прохода раскладки — поэтому прохода два.</summary>
+    void Rebuild() {
+        LayoutRebuilder.ForceRebuildLayoutImmediate(_rt);
+        LayoutRebuilder.ForceRebuildLayoutImmediate(_rt);
     }
 
     static ItemDrop.ItemData Data(ItemDef it) {
@@ -153,7 +193,7 @@ public class ItemCard {
                 List<Stat> left, right;
                 Pair(mine, theirs, out left, out right);
                 _left.Show(it.Icon, it.Shown, sub, left, right);
-                _right.Show(eq.GetIcon(), Localization.instance.Localize(eq.m_shared.m_name),
+                _right.Show(eq.GetIcon(), NameOf(eq),
                             L.CardEquipped + Level(eq.m_shared.m_maxQuality, eq.m_quality),
                             right, null);
                 _right.Visible(true);
@@ -167,8 +207,35 @@ public class ItemCard {
                 }
             }
         }
+        var details = wear ? DetailsOf(data, q, eq) : new List<Detail>();
+        _hasDetails = details.Count > 0;
+        _details.Show(details, L.DetBack(KeyName(DetailsKey)));
+        bool set = details.Exists(x => x.Key == "set");
         _recipe.Show(it, q);
-        LayoutRebuilder.ForceRebuildLayoutImmediate(_rt);
+        _recipe.Hint(_hasDetails && DetailsKey != KeyCode.None
+            ? L.DetHint(KeyName(DetailsKey), set, details.Exists(x => x.Key != "set")) : "");
+        Rebuild();
+    }
+
+    /// <summary>
+    /// Описания создаваемой вещи, а за ними — надетой, если у неё свои.
+    ///
+    /// Одинаковый бонус комплекта дважды не пишем: шлем и поножи одного
+    /// набора дают один и тот же текст. Свой — пишем: игроку, меняющему
+    /// панцирный шлем на бронзовый, важно, какой бонус он при этом теряет.
+    /// </summary>
+    static List<Detail> DetailsOf(ItemDrop.ItemData data, int q, ItemDrop.ItemData eq) {
+        var p = Player.m_localPlayer;
+        var list = ItemStats.Details(data, q, p);
+        if (Compare && eq != null) {
+            string who = L.DetOf(NameOf(eq));
+            foreach (var d in ItemStats.Details(eq, eq.m_quality, p)) {
+                if (list.Exists(x => x.Key == d.Key && x.Name == d.Name)) continue;
+                d.Sub = d.Key == "set" ? who + " · " + d.Sub : who;
+                list.Add(d);
+            }
+        }
+        return list;
     }
 
     static string Level(int max, int q) {
@@ -271,7 +338,25 @@ public class ItemCard {
         _left = new Column(_cards, true);
         _right = new Column(_cards, false);
         _recipe = new RecipeBox(_rt);
+        _details = new DetailsBox(_rt);
+        _details.Visible(false);
         _root.SetActive(false);
+    }
+
+    /// <summary>
+    /// Название надетой вещи на языке окна, а не игры.
+    ///
+    /// Localization игры знает один язык: при русском окне и английской игре
+    /// слева стояла «Бронзовая булава», а справа «Flametal Mace». Каталог
+    /// берёт название по префабу — так же берём и здесь; игра — запасной
+    /// вариант для вещи, которой в каталоге нет.
+    /// </summary>
+    static string NameOf(ItemDrop.ItemData eq) {
+        if (eq.m_dropPrefab != null) {
+            var it = GameData.Get(GameData.Slug(eq.m_dropPrefab.name));
+            if (it != null) return it.Shown;
+        }
+        return Localization.instance.Localize(eq.m_shared.m_name);
     }
 
     static RectTransform Panel(Transform parent, string name) {
@@ -279,6 +364,11 @@ public class ItemCard {
         var le = rt.gameObject.AddComponent<LayoutElement>();
         le.minWidth = le.preferredWidth = CardWidth;
         le.flexibleWidth = 0;
+        // Сплошная подложка под плашкой игры. У самой плашки края и середина
+        // полупрозрачные в текстуре, и никакой цвет этого не перекрывает:
+        // сквозь карточку читались строки каталога и подсказки клавиш, а
+        // цифры карточки стояли прямо поверх чужих цифр.
+        UiKit.Box(rt, "under", null, Solid);
         UiKit.Box(rt, "bg", UiKit.FieldSprite, Back);
         UiKit.Frame(rt, new Color(0.93f, 0.77f, 0.38f, 0.28f));
         var v = rt.gameObject.AddComponent<VerticalLayoutGroup>();
@@ -386,7 +476,10 @@ public class ItemCard {
             _label.text = s.Label;
             _label.color = header ? UiKit.Gold : UiKit.Dim;
             _value.text = s.Text ?? "";
-            _value.color = UiKit.Ink;
+            // Эффект и комплект — золотом, как подсказка «Зажмите Alt» в
+            // рецепте: так видно, что у этой строки есть продолжение.
+            _value.color = s.Key == "set" || s.Key == "effect" || s.Key == "adreffect"
+                ? UiKit.Gold : UiKit.Ink;
             _delta.text = "";
 
             if (other != null && s.Dir != Better.None && !header) {
@@ -417,14 +510,22 @@ public class ItemCard {
     /// это прямо сейчас», а на него сундуки в полусотне метров не отвечают.
     /// </summary>
     class RecipeBox {
-        readonly RectTransform _list;
-        readonly TextMeshProUGUI _title, _where;
+        readonly RectTransform _rt, _list;
+        readonly TextMeshProUGUI _title, _where, _hint;
         readonly List<RecipeRow> _rows = new List<RecipeRow>();
 
         public RecipeBox(Transform parent) {
             var rt = Panel(parent, "recipe");
-            _title = UiKit.Label(rt, "title", "", 15, UiKit.Gold);
-            _title.gameObject.AddComponent<LayoutElement>().minHeight = 20;
+            _rt = rt;
+            var head = UiKit.Row(rt, "head", 20);
+            UiKit.Horizontal(head, 8);
+            _title = UiKit.Label(head, "title", "", 15, UiKit.Gold);
+            var tle = _title.gameObject.AddComponent<LayoutElement>();
+            tle.flexibleWidth = 1;
+            tle.minWidth = 0;
+            _hint = Shrinking(UiKit.Label(head, "hint", "", 13, UiKit.Dim,
+                                          TextAlignmentOptions.Right), 10);
+            _hint.gameObject.AddComponent<LayoutElement>().minWidth = 0;
             _where = UiKit.Label(rt, "where", "", 13, UiKit.Dim);
             _where.gameObject.AddComponent<LayoutElement>().minHeight = 18;
             UiKit.Separator(rt);
@@ -434,6 +535,15 @@ public class ItemCard {
             v.childControlWidth = v.childControlHeight = true;
             v.childForceExpandWidth = true;
             v.childForceExpandHeight = false;
+        }
+
+        public void Visible(bool on) {
+            if (_rt.gameObject.activeSelf != on) _rt.gameObject.SetActive(on);
+        }
+
+        public void Hint(string text) {
+            _hint.text = text;
+            _hint.gameObject.SetActive(!string.IsNullOrEmpty(text));
         }
 
         public void Show(ItemDef it, int q) {
@@ -459,6 +569,69 @@ public class ItemCard {
                 _rows[i++].Show(kv.Key, have.TryGetValue(kv.Key, out got) ? got : 0, kv.Value);
             }
             for (; i < _rows.Count; i++) _rows[i].Hide();
+        }
+    }
+
+    /* ————————————————————————— описания за Alt ————————————————————————— */
+
+    /// <summary>Бонус комплекта и эффекты целиком, на месте рецепта.</summary>
+    class DetailsBox {
+        readonly RectTransform _rt;
+        readonly TextMeshProUGUI _back;
+        readonly List<DetailSection> _sections = new List<DetailSection>();
+
+        public DetailsBox(Transform parent) {
+            _rt = Panel(parent, "details");
+            _back = UiKit.Label(_rt, "back", "", 13, UiKit.Dim, TextAlignmentOptions.Right);
+            _back.gameObject.AddComponent<LayoutElement>().minHeight = 18;
+        }
+
+        public void Visible(bool on) {
+            if (_rt.gameObject.activeSelf != on) _rt.gameObject.SetActive(on);
+        }
+
+        public void Show(List<Detail> list, string back) {
+            _back.text = back;
+            while (_sections.Count < list.Count) _sections.Add(new DetailSection(_rt));
+            for (int i = 0; i < _sections.Count; i++) {
+                if (i < list.Count) _sections[i].Show(list[i], i > 0);
+                else _sections[i].Hide();
+            }
+            _back.transform.SetAsLastSibling();
+        }
+    }
+
+    class DetailSection {
+        readonly GameObject _sep;
+        readonly TextMeshProUGUI _title, _sub, _body;
+
+        public DetailSection(Transform parent) {
+            _sep = UiKit.Separator(parent).gameObject;
+            _title = UiKit.Label(parent, "title", "", 15, UiKit.Gold);
+            _title.gameObject.AddComponent<LayoutElement>().minHeight = 20;
+            _sub = UiKit.Label(parent, "sub", "", 13, UiKit.Dim);
+            _sub.gameObject.AddComponent<LayoutElement>().minHeight = 18;
+            _body = UiKit.Label(parent, "body", "", 14, UiKit.Ink);
+            _body.textWrappingMode = TextWrappingModes.Normal;
+            _body.overflowMode = TextOverflowModes.Overflow;
+            _body.richText = true;   // игра красит числа в подсказке тегами <color>
+        }
+
+        public void Show(Detail d, bool separated) {
+            _sep.SetActive(separated);
+            _title.text = d.Title;
+            _title.gameObject.SetActive(true);
+            _sub.text = d.Sub ?? "";
+            _sub.gameObject.SetActive(!string.IsNullOrEmpty(d.Sub));
+            _body.text = d.Body;
+            _body.gameObject.SetActive(true);
+        }
+
+        public void Hide() {
+            _sep.SetActive(false);
+            _title.gameObject.SetActive(false);
+            _sub.gameObject.SetActive(false);
+            _body.gameObject.SetActive(false);
         }
     }
 

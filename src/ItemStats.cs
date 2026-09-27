@@ -19,6 +19,15 @@ public class Stat {
     public System.Func<float, string> Delta;
 }
 
+/// <summary>Раскрытое описание эффекта: то, что прячется за Alt.</summary>
+public class Detail {
+    public string Key;       // effect / adreffect / set — чтобы не повторять у надетой
+    public string Name;      // название эффекта, по нему же сверяем с надетой вещью
+    public string Title;     // «Комплект · Sneaky»
+    public string Sub;       // «Надето 2 из 4» или чья это вещь; может быть пустым
+    public string Body;      // текст подсказки игры
+}
+
 /// <summary>
 /// Характеристики вещи — те же, что показывает подсказка игры, и посчитанные
 /// теми же методами игры: GetDamage, GetArmor, GetBaseBlockPower и прочие
@@ -253,6 +262,69 @@ public static class ItemStats {
             if (name != null) Words(list, "set", L.StSet, name + " (" + s.m_setSize + ")");
         }
         return list;
+    }
+
+    /* ——— описания за Alt ——— */
+
+    /// <summary>
+    /// Полные описания эффектов вещи: эффект экипировки, эффект полного
+    /// адреналина у тринкета, бонус комплекта.
+    ///
+    /// В карточке от них видно только название — «Sneaky (4)», — а у части
+    /// комплектов описание в несколько строк, и держать его в карточке
+    /// постоянно значит растянуть её на полэкрана. Поэтому текст раскрывается
+    /// по зажатому Alt на месте рецепта.
+    ///
+    /// Текст — тот же, что пишет подсказка игры, и тем же методом игры: он уже
+    /// учитывает качество. Язык у него игровой, а не окна: своих переводов
+    /// описаний у мода нет и взять их неоткуда.
+    /// </summary>
+    public static List<Detail> Details(ItemDrop.ItemData d, int quality, Player p) {
+        var list = new List<Detail>();
+        if (d == null || d.m_shared == null) return list;
+        var s = d.m_shared;
+        quality = Mathf.Max(1, quality);
+        float skill = p != null ? p.GetSkillLevel(s.m_skillType) : 0f;
+
+        var eq = Localized(s.m_equipStatusEffect);
+        if (eq != null)
+            Add(list, "effect", eq, L.StEffect, null,
+                Safe(() => d.GetStatusEffectTooltip(quality, skill)));
+        if (s.m_itemType == ItemDrop.ItemData.ItemType.Trinket) {
+            var adr = Localized(s.m_fullAdrenalineSE);
+            if (adr != null)
+                Add(list, "adreffect", adr, L.StAdrenaline, null,
+                    Safe(() => s.m_fullAdrenalineSE.GetTooltipString()));
+        }
+        if (s.m_setStatusEffect != null && s.m_setSize > 1) {
+            var set = Localized(s.m_setStatusEffect);
+            if (set != null) {
+                int worn = p != null && !string.IsNullOrEmpty(s.m_setName)
+                    ? p.GetSetCount(s.m_setName) : 0;
+                Add(list, "set", set, L.StSet, L.DetWorn(worn, s.m_setSize),
+                    Safe(() => d.GetSetStatusEffectTooltip(quality, skill)));
+            }
+        }
+        return list;
+    }
+
+    static void Add(List<Detail> list, string key, string name, string kind,
+                    string sub, string body) {
+        list.Add(new Detail {
+            Key = key, Name = name, Title = kind + " · " + name, Sub = sub,
+            Body = string.IsNullOrEmpty(body) ? L.DetNoText
+                                              : Localization.instance.Localize(body).Trim(),
+        });
+    }
+
+    /// <summary>Подсказку пишет код игры, и падение в нём не должно ронять
+    /// карточку: лучше пустое описание, чем исключение в каждом кадре.</summary>
+    static string Safe(System.Func<string> read) {
+        try { return read(); }
+        catch (System.Exception e) {
+            ForgeplanPlugin.Log.LogWarning("описание эффекта не прочиталось: " + e.Message);
+            return null;
+        }
     }
 
     static void Dmg(List<Stat> list, string key, string label, float v) {

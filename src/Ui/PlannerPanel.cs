@@ -495,6 +495,8 @@ public class PlannerPanel {
         var cle0 = _cartCount.gameObject.AddComponent<LayoutElement>();
         cle0.flexibleWidth = 0;
 
+        BuildCartColumns(right);
+
         var cartFrame = UiKit.Rect(right, "cart-frame");
         var cle = cartFrame.gameObject.AddComponent<LayoutElement>();
         cle.flexibleHeight = 1;
@@ -511,6 +513,65 @@ public class PlannerPanel {
         tle.flexibleHeight = 1.5f;
         tle.minHeight = 180;
         _totals = UiKit.ScrollBox(totalsFrame, 3);
+    }
+
+    /* Размеры блоков строки плана. Общие для строки и подписей над списком:
+     * подпись стоит ровно над своим блоком, только если ширины совпадают. */
+    const float LevelsWidth = 4 * 28 + 3 * 4;    // четыре кнопки уровня
+    const float QtyWidth = 32 + 36 + 32 + 2 * 4; // «−», число, «+»
+    const float DelWidth = 28;
+    const float BlockGap = 14;                   // зазор между блоками
+
+    /// <summary>Пустое место заданной ширины — зазор между блоками строки.</summary>
+    static void Gap(Transform parent, float w) {
+        var le = UiKit.Rect(parent, "gap").gameObject.AddComponent<LayoutElement>();
+        le.minWidth = le.preferredWidth = w;
+        le.flexibleWidth = 0;
+    }
+
+    /// <summary>Блок фиксированной ширины с детьми по центру.</summary>
+    static RectTransform Block(Transform parent, string name, float w) {
+        var rt = UiKit.Rect(parent, name);
+        var le = rt.gameObject.AddComponent<LayoutElement>();
+        le.minWidth = le.preferredWidth = w;
+        le.flexibleWidth = 0;
+        UiKit.Horizontal(rt, 4).childAlignment = TextAnchor.MiddleCenter;
+        return rt;
+    }
+
+    /// <summary>
+    /// Подписи столбцов над списком: «Предмет», «Уровень предмета»,
+    /// «Количество».
+    ///
+    /// Без них ряд из четырёх цифр, «−», числа и «+» читался одной кашей:
+    /// уровень путали с количеством, а крестик — с ещё одной кнопкой счётчика.
+    /// Отступы повторяют строку внутри рамки прокрутки: слева отступ рамки и
+    /// строки, справа ещё и место под полосу прокрутки.
+    /// </summary>
+    void BuildCartColumns(Transform parent) {
+        var head = UiKit.Row(parent, "cart-columns", 18);
+        UiKit.Horizontal(head, 6, 10, 23);
+        Gap(head, 26);
+        var item = ColumnLabel(head, L.ColItem, TextAlignmentOptions.Left);
+        item.gameObject.GetComponent<LayoutElement>().flexibleWidth = 1;
+        Gap(head, BlockGap);
+        ColumnLabel(head, L.ColLevel, TextAlignmentOptions.Center, LevelsWidth);
+        Gap(head, BlockGap);
+        ColumnLabel(head, L.ColQty, TextAlignmentOptions.Center, QtyWidth);
+        Gap(head, BlockGap);
+        Gap(head, DelWidth);
+    }
+
+    static TextMeshProUGUI ColumnLabel(Transform parent, string text,
+                                       TextAlignmentOptions align, float w = -1) {
+        var t = UiKit.Label(parent, "col", text, 13, UiKit.Dim, align);
+        t.enableAutoSizing = true;
+        t.fontSizeMin = 10;
+        t.fontSizeMax = 13;
+        var le = t.gameObject.AddComponent<LayoutElement>();
+        le.minWidth = 0;
+        if (w > 0) { le.preferredWidth = w; le.flexibleWidth = 0; }
+        return t;
     }
 
     /// <summary>
@@ -934,6 +995,8 @@ public class PlannerPanel {
         UiKit.Horizontal(row, 10);
         LinkButton(row, "globe", L.Site, Links.Site);
         LinkButton(row, "nexus", "Nexus Mods", Links.Nexus);
+        LinkButton(row, "thunderstore", "Thunderstore", Links.Thunderstore);
+        LinkButton(row, "hexium", "Hexium", Links.Hexium);
         UiKit.Rect(row, "spacer").gameObject
              .AddComponent<LayoutElement>().flexibleWidth = 1;
 
@@ -1109,9 +1172,32 @@ public class PlannerPanel {
     class CartRow {
         readonly GameObject _go;
         readonly Image _icon;
-        readonly TextMeshProUGUI _name, _qty;
+        readonly TextMeshProUGUI _name, _qty, _noLevels;
         readonly List<Button> _quality = new List<Button>();
         Entry _entry;
+
+        static readonly Color DelIdle = new Color(0.66f, 0.32f, 0.27f);
+        static readonly Color DelHot = new Color(0.96f, 0.38f, 0.31f);
+        static readonly Color DelBack = new Color(0.62f, 0.60f, 0.58f, 0.55f);
+
+        /// <summary>
+        /// Крестик удаления: приглушённый и красноватый, под курсором — красный.
+        ///
+        /// Раньше он был такой же кнопкой, как «+» рядом, и промах мимо «+»
+        /// стирал строку вместе с выставленными уровнем и количеством. Теперь он
+        /// отделён зазором и не спорит яркостью с кнопками, которые жмут часто;
+        /// в полную силу загорается, только когда на него навели.
+        /// </summary>
+        static void DeleteButton(Transform parent, UnityEngine.Events.UnityAction onClick) {
+            var btn = UiKit.Button(parent, "\u00D7", DelWidth, 26, onClick, 18);
+            var img = btn.GetComponent<Image>();
+            var label = btn.GetComponentInChildren<TMP_Text>(true);
+            img.color = DelBack;
+            label.color = DelIdle;
+            var hover = btn.gameObject.AddComponent<Hover>();
+            hover.Enter = () => { img.color = Color.white; label.color = DelHot; };
+            hover.Exit = () => { img.color = DelBack; label.color = DelIdle; };
+        }
 
         public CartRow(Transform parent, PlannerPanel owner) {
             var rt = UiKit.Row(parent, "row", 32);
@@ -1120,27 +1206,44 @@ public class PlannerPanel {
 
             _icon = UiKit.Icon(rt, null, 26);
             _name = UiKit.Label(rt, "name", "", 16, UiKit.Ink);
-            _name.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
+            var nle = _name.gameObject.AddComponent<LayoutElement>();
+            nle.flexibleWidth = 1;
+            nle.minWidth = 0;
 
+            // Три блока фиксированной ширины с зазорами: уровень, количество,
+            // удаление. Ширина держится, даже когда блок пуст, — иначе у вещи
+            // без уровней счётчик уезжал влево, и столбцы разных строк стояли
+            // вразнобой.
+            Gap(rt, BlockGap);
+            var levels = Block(rt, "levels", LevelsWidth);
             // Кнопки качества создаём на максимум сразу: у самой «глубокой»
             // вещи в игре четыре уровня, а прятать лишние дешевле, чем
             // пересобирать строку при смене предмета.
             for (int q = 1; q <= 4; q++) {
                 int level = q;
-                _quality.Add(UiKit.Button(rt, q.ToString(), 28, 26, () => {
+                _quality.Add(UiKit.Button(levels, q.ToString(), 28, 26, () => {
                     if (_entry != null) { _entry.Quality = level; owner.MarkDirty(); }
                 }, 14));
             }
+            // У вещи без уровней вместо пустоты — прочерк: пустое место под
+            // подписью «Уровень» выглядело как недорисованная строка.
+            _noLevels = UiKit.Label(levels, "none", "\u2014", 16, UiKit.Faint,
+                                    TextAlignmentOptions.Center);
+            _noLevels.gameObject.AddComponent<LayoutElement>().preferredWidth = LevelsWidth;
 
-            UiKit.Button(rt, "−", 32, 26, () => {
+            Gap(rt, BlockGap);
+            var qty = Block(rt, "qty", QtyWidth);
+            UiKit.Button(qty, "\u2212", 32, 26, () => {
                 if (_entry != null && _entry.Qty > 1) { _entry.Qty--; owner.MarkDirty(); }
             });
-            _qty = UiKit.Label(rt, "qty", "", 17, UiKit.Ink, TextAlignmentOptions.Center);
+            _qty = UiKit.Label(qty, "qty", "", 17, UiKit.Ink, TextAlignmentOptions.Center);
             _qty.gameObject.AddComponent<LayoutElement>().preferredWidth = 36;
-            UiKit.Button(rt, "+", 32, 26, () => {
+            UiKit.Button(qty, "+", 32, 26, () => {
                 if (_entry != null) { _entry.Qty++; owner.MarkDirty(); }
             });
-            UiKit.Button(rt, "×", 32, 26, () => {
+
+            Gap(rt, BlockGap);
+            DeleteButton(rt, () => {
                 if (_entry != null) { Planner.Cart.Remove(_entry); owner.MarkDirty(); }
             });
 
@@ -1170,6 +1273,7 @@ public class PlannerPanel {
                 _quality[q].gameObject.SetActive(on);
                 if (on) Mark(_quality[q], e.Quality == q + 1);
             }
+            _noLevels.gameObject.SetActive(max <= 1);
             if (!_go.activeSelf) _go.SetActive(true);
         }
 

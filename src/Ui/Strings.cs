@@ -102,8 +102,11 @@ public static class L {
     public static string StSet { get { return T("Set bonus", "Комплект"); } }
 
     /* Описания за Alt. */
+    /// <summary>«Сейчас», а не просто «надето»: HoverCompare рядом показывает
+    /// счёт с наведённой вещью («1/3»), и без этого слова два верных числа
+    /// читались как противоречие.</summary>
     public static string DetWorn(int worn, int size) {
-        return T("You wear " + worn + " of " + size, "Надето " + worn + " из " + size);
+        return T("Worn now: " + worn + " of " + size, "Сейчас надето " + worn + " из " + size);
     }
     public static string DetOf(string item) {
         return T("On what you wear: " + item, "У надетого: " + item);

@@ -62,11 +62,16 @@ A trimmed wiki, then — but the trimmed part is the part you were going to sear
 
 [size=4][b]Spoiler-free by default[/b][/size]
 
-A planner opened in your first hour would otherwise retell the whole game: a thousand entries with flametal weapons at the top. So a biome stays locked until the boss before it falls. Meadows, Black Forest and Ocean are always open — you get there on your own.
+A planner opened in your first hour would otherwise retell the whole game: a thousand entries with flametal weapons at the top. So by default the catalogue shows only what your character has discovered — the same recipes the game's own crafting menu shows. Pick up a new material, and what it goes into appears. The mod asks the game what you know rather than guessing.
 
-Locked biomes dim rather than disappear, and the whole thing is one switch in Settings if you would rather see everything. If you have already beaten the bosses, you lose nothing: it is all open.
+Settings has two more modes, one click each:
 
-The victory keys are read from the boss prefabs themselves, so the mod does not carry a list of boss names that a future update could quietly invalidate.
+[list]
+[*][b]By bosses[/b] — for looking ahead without looking too far. A biome opens when the boss before it falls; Meadows, Black Forest and Ocean are open from the start. The victory keys are read from the boss prefabs themselves, so the mod does not carry a list of boss names that a future update could quietly invalidate.[/*]
+[*][b]Everything[/b] — the whole game at once.[/*]
+[/list]
+
+Biomes with nothing open yet dim rather than disappear.
 
 [line]
 
@@ -97,7 +102,7 @@ Client-side only. It does not touch saves, world data or networking, so it is sa
 [General]
   Open            F7           Hotkey that opens the planner
   Russian         false        Window labels in Russian
-  HideUnreached   true         Lock biomes until their boss is beaten
+  Spoilers        Discovered   What the catalogue shows: Discovered, Bosses or Off
 
 [Stock]
   CountChests     true         Count nearby chests, not just your backpack
@@ -135,7 +140,7 @@ The [b]Station[/b] keys are there for repair rather than taste: the crafting pan
 
 The two are kept honest about each other: the mod reads the live game, the site reads extracted game data, and a parity harness compares the catalogue, conversions and per-level costs entry by entry. Four real calculation bugs were found that way in a single day — potential idols counted as ingredients, bronze taken from scrap instead of ore, a five-ingot recipe beating the one-ingot one, and a wrong upgrade curve.
 
-Progression is the one thing the site cannot do: it does not know which bosses you have beaten.
+Progression is the one thing the site cannot do: it does not know what you have discovered or which bosses you have beaten.
 
 [line]
 

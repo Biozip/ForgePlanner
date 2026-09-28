@@ -82,7 +82,11 @@ public class PlannerPanel {
 
     GameObject _settings;          // оверлей настроек; null — ещё не собран
     GameObject _about;             // оверлей «Инфо»
-    Button _spoilerBtn, _chestBtn, _cardBtn, _compareBtn;
+    Button _chestBtn, _cardBtn, _compareBtn;
+    /// <summary>Кнопки режима каталога — по одной на Progress.Mode, в том же
+    /// порядке.</summary>
+    readonly List<Button> _modeBtns = new List<Button>();
+    TextMeshProUGUI _modeHint;
 
     /// <summary>Карточка предмета при наведении на строку.</summary>
     readonly ItemCard _card = new ItemCard();
@@ -91,7 +95,7 @@ public class PlannerPanel {
     TextMeshProUGUI _openLine;
 
     /// <summary>Настройки поменялись — плагину нужно сохранить их в конфиг.</summary>
-    public System.Action<bool> OnSpoilersChanged;
+    public System.Action<Progress.Mode> OnSpoilersChanged;
     public System.Action<bool> OnChestsChanged;
     /// <summary>Считать ли сундуки. Живёт в конфиге, сюда кладёт плагин.</summary>
     public bool Chests = true;
@@ -184,7 +188,9 @@ public class PlannerPanel {
         _about = null;
         _ask = null;
         _askWhere = null;
-        _spoilerBtn = _chestBtn = _cardBtn = _compareBtn = null;
+        _chestBtn = _cardBtn = _compareBtn = null;
+        _modeBtns.Clear();
+        _modeHint = null;
         _openLine = null;
         // Гасим до Destroy: тот откладывает удаление до конца кадра, и при
         // пересборке на экране на кадр оказались бы два окна внахлёст.
@@ -637,7 +643,7 @@ public class PlannerPanel {
             .Where(i => i.HasRecipe)
             .Where(i => !_group.HasValue || i.Group == _group.Value)
             .Where(i => _biome < 0 || i.Tier == _biome)
-            .Where(i => Progress.Unlocked(i.Tier))
+            .Where(Progress.Shows)
             .Where(i => needle.Length == 0 || i.Haystack.Contains(needle))
             .OrderBy(i => i.Shown)
             .ToList();
@@ -657,7 +663,7 @@ public class PlannerPanel {
                 + "прогрессия={3}, всего с рецептом={4}",
                 _group.HasValue ? _group.Value.ToString() : "всё",
                 _biome < 0 ? "все" : Tiers.Ids[_biome],
-                needle, Progress.Enabled ? "вкл" : "выкл", total));
+                needle, Progress.Current, total));
         Fill(true);
 
         // Смена раздела при прокрутке вниз оставляла пустоту: список стал
@@ -890,19 +896,27 @@ public class PlannerPanel {
     }
 
     void BuildSettings() {
-        var box = Overlay("settings", 460f, 490f);
+        var box = Overlay("settings", 460f, 540f);
         _settings = box.parent.gameObject;
 
         UiKit.Label(box, "title", L.Settings, 22, UiKit.Gold)
              .gameObject.AddComponent<LayoutElement>().minHeight = 30;
 
-        _spoilerBtn = UiKit.Button(Line(box), L.NoSpoilers, 320, 30, () => {
-            Progress.Enabled = !Progress.Enabled;
-            if (OnSpoilersChanged != null) OnSpoilersChanged(Progress.Enabled);
-            Progress.Refresh();
-            RefreshSettings();
-        }, 16, TextAlignmentOptions.Left);
-        Hint(box, L.NoSpoilersHint);
+        // Три режима — три кнопки в ряд, а не переключатель по кругу: по
+        // кругу не видно, что вариантов больше двух и какой будет следующим.
+        UiKit.Label(box, "modes", L.SpoilersTitle, 16, UiKit.Ink)
+             .gameObject.AddComponent<LayoutElement>().minHeight = 22;
+        var modes = Line(box);
+        foreach (Progress.Mode mode in System.Enum.GetValues(typeof(Progress.Mode))) {
+            var m = mode;
+            _modeBtns.Add(UiKit.Button(modes, L.ModeName(m), 130, 30, () => {
+                Progress.Current = m;
+                if (OnSpoilersChanged != null) OnSpoilersChanged(m);
+                Progress.Refresh();
+                RefreshSettings();
+            }, 15));
+        }
+        _modeHint = Hint(box, "");
 
         _openLine = UiKit.Label(box, "open", "", 14, UiKit.Ink);
         _openLine.gameObject.AddComponent<LayoutElement>().minHeight = 22;
@@ -946,22 +960,37 @@ public class PlannerPanel {
         return row;
     }
 
-    static void Hint(RectTransform parent, string text) {
+    static TextMeshProUGUI Hint(RectTransform parent, string text) {
         var t = UiKit.Label(parent, "hint", text, 13, UiKit.Dim);
         t.textWrappingMode = TextWrappingModes.Normal;
         var le = t.gameObject.AddComponent<LayoutElement>();
         le.minHeight = 34;
         le.flexibleHeight = 0;
+        return t;
     }
 
     void RefreshSettings() {
-        Mark(_spoilerBtn, Progress.Enabled);
+        for (int i = 0; i < _modeBtns.Count; i++)
+            Mark(_modeBtns[i], (int)Progress.Current == i);
+        if (_modeHint != null) _modeHint.text = L.ModeHint(Progress.Current);
         Mark(_chestBtn, Chests);
         Mark(_cardBtn, ItemCard.Enabled);
         Mark(_compareBtn, ItemCard.Enabled && ItemCard.Compare);
-        if (_openLine != null)
-            _openLine.text = L.BiomesOpen + Progress.OpenCount
-                           + L.OfNine + Tiers.Ids.Length;
+        if (_openLine != null) {
+            switch (Progress.Current) {
+                case Progress.Mode.Discovered:
+                    _openLine.text = L.RecipesKnown + Progress.KnownCount
+                                   + L.OfNine + Progress.KnownTotal;
+                    break;
+                case Progress.Mode.Bosses:
+                    _openLine.text = L.BiomesOpen + Progress.OpenCount
+                                   + L.OfNine + Tiers.Ids.Length;
+                    break;
+                default:
+                    _openLine.text = "";
+                    break;
+            }
+        }
     }
 
     /* ————————————————————————— инфо ————————————————————————— */

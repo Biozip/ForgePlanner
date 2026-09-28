@@ -5,8 +5,17 @@ using UnityEngine;
 namespace Forgeplan {
 
 /// <summary>
-/// Прогрессия по боссам — чтобы каталог не показывал того, до чего игрок ещё
-/// не дошёл.
+/// Прогрессия — чтобы каталог не показывал того, до чего игрок ещё не дошёл.
+///
+/// Режимов три (см. <see cref="Mode"/>), и по умолчанию стоит самый строгий:
+/// показывать только открытое самим персонажем, как меню крафта игры. До 1.3.1
+/// был лишь режим по боссам, и первый же отчёт об ошибке был о нём: на новом
+/// сервере, где игрок видел Луга, Чёрный лес и море, каталог показал рецепты
+/// из хитина и чешуи змея. Для мода это было «Океан открыт всегда», для игрока
+/// — спойлер. Ожидание игрока задаёт сама игра, спорить с ней незачем.
+///
+/// Режим по боссам остался: он для тех, кто хочет заглянуть вперёд, но не
+/// дальше текущего этапа.
 ///
 /// Valheim устроен так, что почти всё интересное лежит за боссом: пока не
 /// повержен Древний, в Болото идти не с чем, а список из тысячи позиций,
@@ -24,8 +33,31 @@ namespace Forgeplan {
 /// не узнал, попадает в лог: молча ошибиться тут хуже, чем сказать вслух.
 /// </summary>
 public static class Progress {
-    /// <summary>Скрывать ли неоткрытое. Ставит плагин из конфига.</summary>
-    public static bool Enabled = true;
+    public enum Mode {
+        /// <summary>Только то, что персонаж уже открыл: рецепты и постройки,
+        /// которые игра сама пометила известными.</summary>
+        Discovered,
+        /// <summary>Биом открыт, когда повержен босс перед ним.</summary>
+        Bosses,
+        /// <summary>Всё сразу.</summary>
+        Off,
+    }
+
+    /// <summary>Текущий режим. Ставит плагин из конфига.</summary>
+    public static Mode Current = Mode.Discovered;
+
+    /// <summary>В режиме «открытое» — есть ли в биоме хоть одна известная
+    /// вещь. Кнопка биома без таких вещей гаснет так же, как запертая боссом.</summary>
+    static readonly bool[] Seen = new bool[Tiers.Ids.Length];
+
+    /// <summary>Сколько рецептов персонаж знает и сколько их всего. Для окна
+    /// настроек.</summary>
+    public static int KnownCount, KnownTotal;
+
+    /// <summary>Мир открыл всё сам: модификатор мира «все рецепты открыты»
+    /// или режим без затрат из консоли. Меню крафта игры тогда показывает
+    /// всё — и каталог тоже.</summary>
+    static bool _allKnown;
 
     /// <summary>Биом -> ключ, который обязан стоять в мире. Пусто — открыт
     /// всегда.</summary>
@@ -130,13 +162,69 @@ public static class Progress {
                       || zone.GetGlobalKey(Gate[i]);
             if (Open[i]) OpenCount++;
         }
+        if (Current == Mode.Discovered) RefreshKnown();
     }
 
-    /// <summary>Показывать ли этот биом и его предметы.</summary>
+    static void RefreshKnown() {
+        var p = Player.m_localPlayer;
+        var zone = ZoneSystem.instance;
+        _allKnown = p == null || p.NoCostCheat()
+                    || (zone != null && zone.GetGlobalKey(GlobalKeys.AllRecipesUnlocked));
+        for (int i = 0; i < Seen.Length; i++) Seen[i] = false;
+        KnownCount = KnownTotal = 0;
+        foreach (var it in GameData.Items.Values) {
+            if (!it.HasRecipe) continue;
+            KnownTotal++;
+            if (!Known(it)) continue;
+            KnownCount++;
+            if (it.Tier >= 0 && it.Tier < Seen.Length) Seen[it.Tier] = true;
+        }
+    }
+
+    /// <summary>
+    /// Знает ли персонаж этот рецепт — по памяти самой игры, а не по догадке.
+    ///
+    /// Игра помнит у каждого игрока имена открытых рецептов и построек
+    /// (<c>m_knownRecipes</c>) и предметов, которые он держал в руках
+    /// (<c>m_knownMaterial</c>). Рецепт открывается, когда известен каждый его
+    /// материал и станок, — тем же правилом живёт меню крафта.
+    ///
+    /// Плавки и выпечки у игры рецептами не считаются, их в m_knownRecipes нет.
+    /// Слиток меди поэтому «известен», если персонаж его уже держал или знает
+    /// всё, что кладут в плавильню: руду и уголь.
+    /// </summary>
+    public static bool Known(ItemDef it) {
+        var p = Player.m_localPlayer;
+        if (p == null || _allKnown) return true;
+        if (it.FromConversion) return KnownMaterial(it, p, 0);
+        return p.IsRecipeKnown(it.Token);
+    }
+
+    static bool KnownMaterial(ItemDef it, Player p, int depth) {
+        if (p.IsMaterialKnown(it.Token)) return true;
+        if (it.HasRecipe && !it.FromConversion) return p.IsRecipeKnown(it.Token);
+        if (!it.FromConversion || depth > 4) return false;
+        foreach (var src in it.Levels[0].Keys) {
+            var mat = GameData.Get(src);
+            if (mat == null || !KnownMaterial(mat, p, depth + 1)) return false;
+        }
+        return true;
+    }
+
+    /// <summary>Доступна ли кнопка биома.</summary>
     public static bool Unlocked(int tier) {
-        if (!Enabled) return true;
+        if (Current == Mode.Off) return true;
         if (tier < 0 || tier >= Open.Length) return true;
-        return Open[tier];
+        return Current == Mode.Bosses ? Open[tier] : Seen[tier];
+    }
+
+    /// <summary>Показывать ли вещь в каталоге.</summary>
+    public static bool Shows(ItemDef it) {
+        switch (Current) {
+            case Mode.Off: return true;
+            case Mode.Bosses: return Unlocked(it.Tier);
+            default: return Known(it);
+        }
     }
 }
 

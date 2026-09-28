@@ -1,6 +1,8 @@
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using System.Collections.Generic;
+using System.Reflection;
 using Forgeplan.Ui;
 using HarmonyLib;
 using UnityEngine;
@@ -31,7 +33,7 @@ public class ForgeplanPlugin : BaseUnityPlugin {
     ConfigEntry<bool> _includeChests;
     ConfigEntry<bool> _selfTest;
     ConfigEntry<bool> _russian;
-    ConfigEntry<bool> _noSpoilers;
+    ConfigEntry<Progress.Mode> _spoilers;
     ConfigEntry<bool> _stationButton;
     ConfigEntry<float> _stationX, _stationY;
     ConfigEntry<Ui.StationButton.Corner> _stationCorner;
@@ -68,14 +70,10 @@ public class ForgeplanPlugin : BaseUnityPlugin {
             "Window labels in Russian. Also toggled by the button in the header.");
         L.Ru = _russian.Value;
 
-        // По умолчанию включено, и это не осторожность, а единственное
-        // разумное умолчание: кто боссов уже побил, ничего не теряет — у него
-        // открыто всё. А кто не побил, тому список из тысячи позиций
-        // пересказывает игру вперёд, и выключить он это уже не сможет.
-        _noSpoilers = Config.Bind("General", "HideUnreached", true,
-            "Lock biomes whose boss is still alive. Meadows, Black Forest and "
-            + "Ocean are always open. Also toggled in the Settings window.");
-        Progress.Enabled = _noSpoilers.Value;
+        // По умолчанию — «открытое», как в меню крафта игры. Кто играет давно,
+        // ничего не теряет: у него открыто почти всё. А новичку список из
+        // тысячи позиций пересказывает игру вперёд, и развидеть это нельзя.
+        BindSpoilers();
 
         _stationButton = Config.Bind("Station", "Button", true,
             "Show the ForgePlanner button on the crafting panel.");
@@ -155,7 +153,7 @@ public class ForgeplanPlugin : BaseUnityPlugin {
         // именам ассетов. Список найденного уходит в лог вместе с самопроверкой.
         UiKit.Verbose = _selfTest.Value;
         Panel.OnLanguageChanged = ru => { _russian.Value = ru; };
-        Panel.OnSpoilersChanged = on => { _noSpoilers.Value = on; };
+        Panel.OnSpoilersChanged = mode => { _spoilers.Value = mode; };
         Panel.OnChestsChanged = on => { _includeChests.Value = on; };
         Panel.OnCardChanged = (on, compare) => {
             _cardEnabled.Value = on;
@@ -170,6 +168,53 @@ public class ForgeplanPlugin : BaseUnityPlugin {
 
     void OnDestroy() {
         if (_harmony != null) _harmony.UnpatchSelf();
+    }
+
+    /// <summary>
+    /// Режим каталога. До 1.3.1 на его месте был переключатель HideUnreached,
+    /// и его значение надо перенести, а сам ключ — убрать из файла: забытая
+    /// строка «HideUnreached = true», которая ничего не делает, хуже её
+    /// отсутствия.
+    ///
+    /// Выключенный переключатель значил «покажи всё» — это и остаётся.
+    /// Включённый переходит на новое умолчание: он и просил прятать спойлеры,
+    /// а режим по боссам, как выяснилось, прятал их не все.
+    ///
+    /// Прочитанные, но ещё не привязанные строки конфига BepInEx держит в
+    /// закрытом OrphanedEntries — отсюда отражение. Не вышло — не беда:
+    /// останется новое умолчание и лишняя строка в файле.
+    /// </summary>
+    void BindSpoilers() {
+        Dictionary<ConfigDefinition, string> orphans = null;
+        try {
+            orphans = typeof(ConfigFile)
+                .GetProperty("OrphanedEntries", BindingFlags.NonPublic | BindingFlags.Instance)
+                ?.GetValue(Config) as Dictionary<ConfigDefinition, string>;
+        } catch (System.Exception e) {
+            Log.LogWarning("конфиг: старые ключи не прочитать — " + e.Message);
+        }
+        var old = new ConfigDefinition("General", "HideUnreached");
+        string was = null;
+        bool fresh = orphans == null
+                     || !orphans.ContainsKey(new ConfigDefinition("General", "Spoilers"));
+        if (orphans != null) orphans.TryGetValue(old, out was);
+
+        _spoilers = Config.Bind("General", "Spoilers", Progress.Mode.Discovered,
+            "What the catalogue shows. Discovered: only what your character has "
+            + "discovered, the same recipes the game's crafting menu shows. Bosses: "
+            + "a biome opens when the boss before it falls; Meadows, Black Forest "
+            + "and Ocean are open from the start. Off: everything. Also switched "
+            + "in the Settings window.");
+
+        if (was != null) {
+            if (fresh && was.Trim().ToLowerInvariant() == "false")
+                _spoilers.Value = Progress.Mode.Off;
+            orphans.Remove(old);
+            Config.Save();
+            Log.LogInfo("конфиг: HideUnreached = " + was.Trim()
+                        + " перенесён в Spoilers = " + _spoilers.Value);
+        }
+        Progress.Current = _spoilers.Value;
     }
 
     void Update() {

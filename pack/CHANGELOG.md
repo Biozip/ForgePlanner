@@ -2,6 +2,19 @@
 
 Русская версия с подробностями — `Versions.md` в репозитории.
 
+## 1.4.0
+
+- The catalogue now shows only what your character has discovered, the same
+  recipes the game's own crafting menu shows. Thanks to the first bug report
+  on Hexium: on a fresh server it listed serpent, chitin and firework recipes.
+- Three modes in Settings: Discovered (the new default), By bosses (the old
+  behaviour: a biome opens when the boss before it falls) and Everything.
+  The config key is now `[General] Spoilers`; the old `HideUnreached` value
+  is carried over and removed.
+- Fireworks are no longer counted as Meadows: Hildir sells them only after
+  her third chest, so they belong to the Plains.
+- The set count under Alt reads "Worn now: 2 of 4".
+
 ## 1.3.0
 
 - Column labels above the plan: Item, Item level, Quantity.

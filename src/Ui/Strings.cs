@@ -174,19 +174,38 @@ public static class L {
     public static string GameVersion { get { return T("Game: ", "Игра: "); } }
     public static string Done { get { return T("Done", "Готово"); } }
 
-    public static string NoSpoilers {
-        get { return T("Hide what you have not reached", "Скрывать недостигнутое"); }
+    public static string SpoilersTitle {
+        get { return T("Show in the catalogue", "Показывать в каталоге"); }
     }
-    public static string NoSpoilersHint {
-        get {
-            return T("Biomes open as their bosses fall. Meadows, Black Forest and "
-                     + "the Ocean are open from the start. Switch this off and the "
-                     + "catalogue shows the whole game at once.",
-                     "Биомы открываются по мере побед над боссами. Луга, Чёрный лес "
-                     + "и Океан открыты сразу. Выключите — и каталог покажет всю "
-                     + "игру целиком.");
+    public static string ModeName(Progress.Mode m) {
+        switch (m) {
+            case Progress.Mode.Discovered: return T("Discovered", "Открытое");
+            case Progress.Mode.Bosses: return T("By bosses", "По боссам");
+            default: return T("Everything", "Всё");
         }
     }
+    public static string ModeHint(Progress.Mode m) {
+        switch (m) {
+            case Progress.Mode.Discovered:
+                return T("Only what your character has discovered: the same recipes "
+                         + "the game's own crafting menu shows. Pick up a new material, "
+                         + "and what it goes into appears here too.",
+                         "Только то, что персонаж уже открыл: те же рецепты, что в меню "
+                         + "крафта самой игры. Подобрали новый материал — здесь появится "
+                         + "и то, что из него делают.");
+            case Progress.Mode.Bosses:
+                return T("A biome opens when the boss before it falls; Meadows, Black "
+                         + "Forest and the Ocean are open from the start. Lets you look "
+                         + "ahead, but not past the stage you are at.",
+                         "Биом открывается, когда повержен босс перед ним; Луга, Чёрный "
+                         + "лес и Океан открыты сразу. Можно заглянуть вперёд, но не "
+                         + "дальше текущего этапа.");
+            default:
+                return T("The whole game at once, spoilers included.",
+                         "Вся игра сразу, со всеми спойлерами.");
+        }
+    }
+    public static string RecipesKnown { get { return T("Recipes known: ", "Известно рецептов: "); } }
     public static string BiomesOpen { get { return T("Biomes open: ", "Открыто биомов: "); } }
     public static string OfNine { get { return T(" of ", " из "); } }
     public static string UseChests {

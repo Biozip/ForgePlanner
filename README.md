@@ -165,7 +165,8 @@ Sending anything over the network in Valheim requires `ZRoutedRpc`, `ZNet`,
 `ZPackage`, `ZDO` or `ZSteamSocket`. **None of them is in that list.**
 `ZNetView` is there because `Container.m_nview` is typed that way, and the only
 method called on it is `IsValid()`. `ZoneSystem` is used for one read,
-`GetGlobalKey`, to find out which bosses are down.
+`GetGlobalKey`, to find out which bosses are down and whether the world has
+all recipes unlocked.
 
 From `System.IO` the assembly uses `Stream` and `MemoryStream` only, to read its
 own embedded icons out of the DLL. No file and no network type appears
@@ -216,7 +217,8 @@ counted as ingredients, bronze taken from scrap instead of ore, a five-ingot
 recipe beating the one-ingot one, and a wrong upgrade curve. All four were
 fixed on both sides.
 
-Progression is the one thing the site cannot do: it does not know which bosses
+Progression is the one thing the site cannot do: it does not know what you have
+discovered or which bosses
 you have beaten.
 
 ## Release history

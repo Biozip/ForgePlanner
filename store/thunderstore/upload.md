@@ -34,5 +34,6 @@ plugins/Forgeplan.dll
 ## Категории
 
 Сейчас (по API, 2026-09-27): Mods · Crafting · Client-side · Utility.
-У RoutePlanner сверх того стоят «AI Generated» и «Deep North Update» — см.
-`docs/platforms.md`, строка «Пометка про ИИ».
+У RoutePlanner сверх того стоят «AI Generated» и «Deep North Update». Пометок
+об ИИ у ForgePlanner нет ни в категориях, ни в тексте страницы — решение автора
+от 2026-09-27; не добавлять и не предлагать.

@@ -112,16 +112,21 @@ cannot fall behind a game patch the way a wiki page can.
 ## Spoiler-free by default
 
 A planner opened in your first hour would otherwise retell the whole game: a
-thousand entries with flametal weapons at the top. So a biome stays locked
-until the boss before it falls. Meadows, Black Forest and Ocean are always
-open — you get there on your own.
+thousand entries with flametal weapons at the top. So by default the catalogue
+shows only what your character has discovered — the same recipes the game's
+own crafting menu shows. Pick up a new material, and what it goes into
+appears. The mod asks the game what you know rather than guessing.
 
-Locked biomes dim rather than disappear, and the whole thing is one switch in
-Settings if you would rather see everything. If you have already beaten the
-bosses, you lose nothing: it is all open.
+Settings has two more modes, one click each:
 
-The victory keys are read from the boss prefabs themselves, so the mod does not
-carry a list of boss names that a future update could quietly invalidate.
+- **By bosses** — for looking ahead without looking too far. A biome opens when
+  the boss before it falls; Meadows, Black Forest and Ocean are open from the
+  start. The victory keys are read from the boss prefabs themselves, so the mod
+  does not carry a list of boss names that a future update could quietly
+  invalidate.
+- **Everything** — the whole game at once.
+
+Biomes with nothing open yet dim rather than disappear.
 
 ![Settings](media/07-settings.png)
 
@@ -155,7 +160,7 @@ nothing behind but the config file.
 | --- | --- | --- | --- |
 | `General` | `Open` | `F7` | Hotkey that opens the planner |
 | `General` | `Russian` | `false` | Window labels in Russian |
-| `General` | `HideUnreached` | `true` | Lock biomes until their boss is beaten |
+| `General` | `Spoilers` | `Discovered` | What the catalogue shows: `Discovered`, `Bosses` or `Off` |
 | `Stock` | `CountChests` | `true` | Count nearby chests, not just your backpack |
 | `Stock` | `Radius` | `20` | How far a chest counts as yours, in metres |
 | `Station` | `Button` | `true` | Show the ForgePlanner button on station panels |
@@ -190,7 +195,8 @@ found that way in a single day — potential idols counted as ingredients, bronz
 taken from scrap instead of ore, a five-ingot recipe beating the one-ingot one,
 and a wrong upgrade curve.
 
-Progression is the one thing the site cannot do: it does not know which bosses
+Progression is the one thing the site cannot do: it does not know what you have
+discovered or which bosses
 you have beaten.
 
 ## Requirements

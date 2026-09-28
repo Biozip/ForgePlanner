@@ -126,7 +126,7 @@ public static class Tiers {
         { "fiddleheadfern", 7 },
         { "finewood", 1 },
         { "fircone", 1 },
-        { "fireworksrocket_white", 0 },
+        { "fireworksrocket_white", 5 },
         { "fish1", 3 },
         { "fish10", 3 },
         { "fish11", 3 },

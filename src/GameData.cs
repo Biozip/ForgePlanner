@@ -9,6 +9,9 @@ namespace Forgeplan {
 public class ItemDef {
     public string Id;                       // имя префаба в нижнем регистре
     public string Name;                     // уже локализованное имя
+    /// <summary>Токен игры: $item_axe_bronze, $piece_workbench. По нему игра
+    /// помнит, что персонаж уже открыл, см. Progress.Known.</summary>
+    public string Token = "";
     public Sprite Icon;
     /// <summary>Префаб из ObjectDB. Нужен карточке предмета: характеристики
     /// считает сама игра, по её ItemData. У построек null.</summary>
@@ -388,6 +391,7 @@ public static class GameData {
                 Id = id,
                 Prefab = go,
                 Name = Localization.instance.Localize(shared.m_name),
+                Token = shared.m_name ?? "",
                 Icon = (shared.m_icons != null && shared.m_icons.Length > 0)
                     ? shared.m_icons[0] : null,
                 MaxQuality = Mathf.Max(1, shared.m_maxQuality),
@@ -551,6 +555,7 @@ public static class GameData {
             var def = new ItemDef {
                 Id = id,
                 Name = name,
+                Token = piece.m_name ?? "",
                 Icon = piece.m_icon,
                 MaxQuality = 1,
                 Out = 1,

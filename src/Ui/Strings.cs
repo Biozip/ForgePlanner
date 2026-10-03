@@ -30,6 +30,26 @@ public static class L {
      * экране; остальное живёт на кнопках в окне. */
     public static string Pinned { get { return T("Pinned", "Закреплено"); } }
     public static string PinPlan { get { return T("Pin", "Закрепить"); } }
+
+    /* Тотемы PlanBuild. */
+    public static string AddTotem { get { return T("+ Totem", "+ Тотем"); } }
+    public static string NoTotemNearby {
+        get {
+            return T("No plan totem within " + (int)PlanTotems.Reach + " m",
+                     "Тотема планов ближе " + (int)PlanTotems.Reach + " м нет");
+        }
+    }
+    public static string TotemPieces(int n) {
+        return T(n + " planned", "планов: " + n);
+    }
+    public static string TotemMore(int n) {
+        return T("and " + n + " more kinds", "и ещё видов: " + n);
+    }
+    public static string TotemFarShort { get { return T("totem too far", "тотем далеко"); } }
+    public static string CardTotem { get { return T("Still missing", "Не хватает"); } }
+    public static string TotemFar {
+        get { return T("too far, last seen numbers", "далеко, числа последнего осмотра"); }
+    }
     public static string Unpin { get { return T("Unpin", "Открепить"); } }
     public static string PinDone {
         get { return T("Everything gathered.", "Всё собрано."); }

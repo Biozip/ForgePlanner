@@ -552,6 +552,15 @@ public class ItemCard {
             _where.text = string.IsNullOrEmpty(it.Station) ? L.ByHand
                 : GameData.StationName(it.Station) + (it.FromConversion ? ""
                     : "  " + L.LevelShort + (it.MinStationLevel + q - 1));
+            // У тотема PlanBuild не рецепт, а остаток: чего его планам ещё не
+            // хватает. Станков под ним несколько, уровень у построек не нужен.
+            if (it.Totem) {
+                _title.text = L.CardTotem;
+                var all = new List<string>();
+                if (!string.IsNullOrEmpty(it.Station)) all.Add(it.Station);
+                if (it.MoreStations != null) all.AddRange(it.MoreStations);
+                _where.text = string.Join(", ", all.ConvertAll(GameData.StationName).ToArray());
+            }
 
             var need = new Dictionary<string, int>();
             for (int k = 0; k < q && k < it.Levels.Count; k++)

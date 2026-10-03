@@ -1,1 +1,1 @@
-In-game crafting planner. Press F7, list what you want to make, and see the ore, wood, coal and smelting time it takes, which stations you need, and how each item compares with what you wear. Read from your running game.
+In-game crafting planner. Press F7, list what you want to make, and see the ore, wood, coal and smelting time it takes, which stations you need, and how each item compares with what you wear. Read from your running game. Works with PlanBuild.

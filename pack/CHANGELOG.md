@@ -2,6 +2,26 @@
 
 Русская версия с подробностями — `Versions.md` в репозитории.
 
+## 1.5.0
+
+- PlanBuild support: with PlanBuild installed, a **+ Totem** button above the
+  plan adds the nearest plan totem as one row. Its contents are what the
+  plans around the totem still miss, minus what is already in the totem —
+  the same list the totem shows on hover.
+- The row stays in sync on its own: bring materials to the totem or let it
+  build a plan, and the row shrinks. The pinned panel follows it too.
+- Under the totem row, its planned pieces by kind: "Campfire ×2 — 10 Stone,
+  4 Wood". The row itself stays the sum.
+- Walk away far enough for the totem to unload, and the row keeps the last
+  numbers it read, saying so in its name and in the pinned panel's title.
+- Totem materials join the combined total and break down to raw resources
+  like everything else; the stations its plans need appear in the stations
+  block.
+- With several totems in the plan, a planned piece inside two totems' radius
+  is counted once.
+- Without PlanBuild nothing changes. If a PlanBuild update changes how its
+  totem works, the feature switches itself off with a line in the log.
+
 ## 1.4.0
 
 - The catalogue now shows only what your character has discovered, the same

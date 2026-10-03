@@ -4,6 +4,9 @@ A crafting planner that lives inside Valheim. Press **F7**, build a shopping
 list, and see exactly how much ore, wood and hide you need — including the
 smelting, the coal, and which station you have to stand at.
 
+Works with [PlanBuild](https://thunderstore.io/c/valheim/p/MathiasDecrock/PlanBuild/):
+a plan totem goes into the plan as one row, see below.
+
 Everything is read from your running game: recipes, upgrade costs,
 conversions, item names, icons, trader price lists and your language. Nothing
 about the game is hardcoded, so the numbers keep matching after a patch instead
@@ -33,6 +36,7 @@ of going quietly stale.
   same catalogue.
 - **An item card on hover**, compared with what you wear. See below.
 - **Pin the plan** and keep it on screen while you gather. See below.
+- **Works with PlanBuild:** its plan totems go into the plan. See below.
 - **Filter by biome**, with the same colours as the website.
 - **Search and eight tabs:** All, plus Weapons, Armour, Tools, Food, Materials,
   Buildings and Other. Search works in English and Russian whatever language
@@ -79,6 +83,27 @@ Clicks pass straight through it, and you can drag it somewhere else while the
 Esc menu is open.
 
 ![The pinned plan next to the minimap](media/05-pinned.png)
+
+## Works with PlanBuild
+
+With [PlanBuild](https://thunderstore.io/c/valheim/p/MathiasDecrock/PlanBuild/)
+installed, a **+ Totem** button appears above the plan. Stand near a plan
+totem and press it: the totem becomes one row of the plan, and its contents are
+whatever the plans around it still miss, minus what is already in the totem —
+the same list the totem shows on hover.
+
+The row keeps itself up to date. Bring planks to the totem or let it finish a
+plan, and the row shrinks; the pinned panel follows it too. Under the row you
+see what the totem is building, piece by piece: "Campfire ×2 — 10 Stone,
+4 Wood". Its materials join the rest of the plan in one total and break down
+to raw resources like everything else, and the stations its plans need show up
+with the others.
+
+![A plan totem in the plan, with the pieces it is building](media/15-planbuild-totem.png)
+
+A planned piece inside the radius of two totems is counted once, however many
+of those totems are in the plan. PlanBuild is optional: without it the button
+is not there and nothing else changes.
 
 ## Made for a group
 
@@ -203,6 +228,7 @@ you have beaten.
 
 - Valheim 1.0.16 (tested against it)
 - [BepInExPack Valheim](https://thunderstore.io/c/valheim/p/denikson/BepInExPack_Valheim/) 5.4.2350 or newer
+- Optional: [PlanBuild](https://thunderstore.io/c/valheim/p/MathiasDecrock/PlanBuild/) 0.19.1 or newer, for totems in the plan
 
 ## Where to find it
 

@@ -78,6 +78,15 @@ public class ItemDef {
         return string.IsNullOrEmpty(name) || name[0] == '[';
     }
 
+    /// <summary>Станки сверх Station. Нужно строке тотема PlanBuild: под ним
+    /// стоят постройки разных станков — верстака, камнетёса, кузницы, — а
+    /// Station у вещи один. У обычных вещей null.</summary>
+    public List<string> MoreStations;
+
+    /// <summary>Строка плана — тотем PlanBuild, а не вещь игры. Уровней и
+    /// количества у неё нет: состав приходит из тотема, см. PlanTotems.</summary>
+    public bool Totem;
+
     /// <summary>Рецепт не настоящий, а переписанный из превращения станка.
     /// Нужно, чтобы отличать бронзу (её правда куют) от хлеба (его только пекут).</summary>
     public bool FromConversion;
@@ -171,7 +180,27 @@ public static class GameData {
 
     public static ItemDef Get(string id) {
         ItemDef it;
-        return Items.TryGetValue(id, out it) ? it : null;
+        if (Items.TryGetValue(id, out it)) return it;
+        // Тотемы в каталог не входят — их нет ни в поиске, ни в счёте рецептов, —
+        // но расчёт спрашивает про позиции плана только отсюда.
+        return PlanTotems.IsTotem(id) ? PlanTotems.Def(id) : null;
+    }
+
+    /// <summary>Токен игры ($item_wood) -> слаг вещи. Для чужих модов, которые
+    /// называют материалы токенами, а не префабами.</summary>
+    static readonly Dictionary<string, string> ByToken = new Dictionary<string, string>();
+
+    public static string IdByToken(string token) {
+        if (string.IsNullOrEmpty(token)) return null;
+        if (ByToken.Count == 0)
+            foreach (var it in Items.Values) {
+                // Постройки токен делят с вещами редко, но первым пусть будет
+                // предмет: тотем просит материалы, а не постройки.
+                if (it.Id.StartsWith("piece:") || string.IsNullOrEmpty(it.Token)) continue;
+                if (!ByToken.ContainsKey(it.Token)) ByToken[it.Token] = it.Id;
+            }
+        string id;
+        return ByToken.TryGetValue(token, out id) ? id : null;
     }
 
     public static string NameOf(string id) {
@@ -202,6 +231,7 @@ public static class GameData {
 
     public static void Reset() {
         Items.Clear(); Convert.Clear(); StationNames.Clear(); Shadowed.Clear();
+        ByToken.Clear(); PlanTotems.Reset();
         StationIcons.Clear(); TierMemo.Clear();
         RecipeAmounts.Clear(); KilnRule = null; Mirrored = 0;
         SkippedUpgraders = 0; Pieces = 0; Ready = false;

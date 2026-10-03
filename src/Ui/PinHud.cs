@@ -237,6 +237,10 @@ public static class PinHud {
 
     static void Refresh() {
         _title.text = L.Pinned + " · " + Pin.Items.Count;
+        // Тотем выгрузился — числа по нему застыли. На панели нет строк
+        // плана, где это видно в окне, поэтому говорим в заголовке.
+        if (PlanTotems.AnyFar(Pin.Items))
+            _title.text += "  <size=85%><color=#8A8172>" + L.TotemFarShort + "</color></size>";
 
         // Сверху то, чего не хватает больше всего: с этим и идти копать.
         // Собранное опускается вниз, но не исчезает — иначе список тает на

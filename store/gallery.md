@@ -18,6 +18,12 @@
 | `10-russian.png` | Russian interface, switched in one click | 11 | 11 | — |
 | `11-russian-card.png` | The item card in Russian | 12 | 12 | — |
 | `12-russian-settings.png` | Settings in Russian | 13 | 13 | — |
+| `14-planbuild-button.png` | With PlanBuild installed: the + Totem button above the plan | 14 | 14 | — |
+| `15-planbuild-totem.png` | A PlanBuild totem as one row: what it still needs, piece by piece | 15 | 15 | да |
+| `16-planbuild-pinned.png` | The totem's list pinned next to the minimap while you build | 16 | 16 | — |
+
+Кадры PlanBuild (14–16) сняты на 1.5.0 и добавлены в конец, после русских:
+так старые не пришлось переставлять.
 
 Главная картинка на Nexus — `01-in-game.png`: 1919×1067, уменьшенная копия
 в списке модов читается. Счётчик FPS в левом верхнем углу срезан.

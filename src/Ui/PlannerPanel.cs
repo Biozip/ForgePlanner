@@ -71,6 +71,7 @@ public class PlannerPanel {
 
     readonly List<CatalogRow> _catalogRows = new List<CatalogRow>();
     readonly List<CartRow> _cartRows = new List<CartRow>();
+    readonly List<TotemPieceRow> _pieceRows = new List<TotemPieceRow>();
     readonly List<TotalPair> _pairs = new List<TotalPair>();
     readonly List<TotalRow> _notes = new List<TotalRow>();
 
@@ -105,6 +106,8 @@ public class PlannerPanel {
     bool _rawView = true;
     bool _countHave;
     bool _planDirty = true;
+    /// <summary>Когда окно в последний раз перечитывало тотемы PlanBuild.</summary>
+    float _totemsAt;
 
     public bool Visible {
         get { return _root != null && _root.activeSelf; }
@@ -211,6 +214,12 @@ public class PlannerPanel {
         if (!Visible) return;
         if (_search != null && _search.text != _queryShown) Search();
         if (_catalogRows.Count < _matches.Count) Fill(false);
+        // Тотем меняется без нашего участия: в него носят материалы, по нему
+        // достраиваются планы. Пока он в плане, окно перечитывает его само.
+        if (Time.unscaledTime - _totemsAt > 1f && PlanTotems.AnyIn(Planner.Cart)) {
+            _totemsAt = Time.unscaledTime;
+            _planDirty = true;
+        }
         if (_planDirty) { RefreshPlan(); _planDirty = false; }
         _card.Tick();
     }
@@ -488,6 +497,10 @@ public class PlannerPanel {
             else Pin.Set(Planner.Cart);
             _planDirty = true;
         });
+        // Тотем PlanBuild — только если PlanBuild стоит: кнопка, которая всегда
+        // отвечает «тотемов нет», — лишний шум для всех остальных.
+        if (PlanTotems.Available)
+            UiKit.Button(cartHead, L.AddTotem, 104, 24, AddTotem);
         // «Очистить» стоит у плана, который она чистит. В заголовке окна, рядом
         // с «Закрыть», её принимали за «закрыть без сохранения».
         UiKit.Button(cartHead, L.Clear, 104, 24, () => {
@@ -699,6 +712,21 @@ public class PlannerPanel {
         }
     }
 
+    /// <summary>Добавить в план ближайший тотем PlanBuild.</summary>
+    void AddTotem() {
+        var me = Player.m_localPlayer;
+        var id = me != null ? PlanTotems.Nearest(me.transform.position) : null;
+        if (id == null) {
+            if (MessageHud.instance != null)
+                MessageHud.instance.ShowMessage(MessageHud.MessageType.Center, L.NoTotemNearby);
+            return;
+        }
+        if (Planner.Cart.Any(e => e.Id == id)) return;
+        PlanTotems.Track(id);
+        Planner.Cart.Add(new Entry { Id = id, Qty = 1, Quality = 1 });
+        _planDirty = true;
+    }
+
     public void Add(string id) {
         var e = Planner.Cart.FirstOrDefault(x => x.Id == id);
         if (e != null) e.Qty++;
@@ -725,11 +753,27 @@ public class PlannerPanel {
         // чем отсутствие у неё собственной настройки.
         if (Pin.RawView != _rawView) { Pin.RawView = _rawView; Ui.PinHud.Invalidate(); }
 
+        // Под строкой тотема — его постройки по видам. Строки из двух пулов,
+        // поэтому порядок в списке ставим руками.
+        int slot = 0, sub = 0;
         for (int i = 0; i < Planner.Cart.Count; i++) {
             if (i >= _cartRows.Count) _cartRows.Add(new CartRow(_cart, this));
-            _cartRows[i].Show(Planner.Cart[i]);
+            var e = Planner.Cart[i];
+            _cartRows[i].Show(e);
+            _cartRows[i].Go.transform.SetSiblingIndex(slot++);
+            if (!PlanTotems.IsTotem(e.Id)) continue;
+            var groups = PlanTotems.Groups(e.Id).Where(g => g.Need.Count > 0).ToList();
+            int shown = groups.Count > TotemPieceRow.Max ? TotemPieceRow.Max - 1 : groups.Count;
+            int lines = shown < groups.Count ? shown + 1 : shown;   // + «и ещё N»
+            for (int k = 0; k < lines; k++) {
+                if (sub >= _pieceRows.Count) _pieceRows.Add(new TotemPieceRow(_cart));
+                if (k < shown) _pieceRows[sub].Show(groups[k]);
+                else _pieceRows[sub].ShowMore(groups.Count - shown);
+                _pieceRows[sub++].Go.transform.SetSiblingIndex(slot++);
+            }
         }
         for (int i = Planner.Cart.Count; i < _cartRows.Count; i++) _cartRows[i].Hide();
+        for (int i = sub; i < _pieceRows.Count; i++) _pieceRows[i].Hide();
 
         int pieces = Planner.Cart.Sum(e => e.Qty);
         _cartCount.text = pieces > 0 ? L.TotalItems + pieces : "";
@@ -836,6 +880,10 @@ public class PlannerPanel {
             int had;
             if (!need.TryGetValue(it.Station, out had) || lvl > had)
                 need[it.Station] = lvl;
+            // Под тотемом — постройки разных станков, и нужны все.
+            if (it.MoreStations != null)
+                foreach (var s in it.MoreStations)
+                    if (!need.ContainsKey(s)) need[s] = 1;
         }
         if (need.Count == 0) return;
 
@@ -1203,6 +1251,7 @@ public class PlannerPanel {
         readonly Image _icon;
         readonly TextMeshProUGUI _name, _qty, _noLevels;
         readonly List<Button> _quality = new List<Button>();
+        readonly Button _minus, _plus;
         Entry _entry;
 
         static readonly Color DelIdle = new Color(0.66f, 0.32f, 0.27f);
@@ -1262,12 +1311,12 @@ public class PlannerPanel {
 
             Gap(rt, BlockGap);
             var qty = Block(rt, "qty", QtyWidth);
-            UiKit.Button(qty, "\u2212", 32, 26, () => {
+            _minus = UiKit.Button(qty, "\u2212", 32, 26, () => {
                 if (_entry != null && _entry.Qty > 1) { _entry.Qty--; owner.MarkDirty(); }
             });
             _qty = UiKit.Label(qty, "qty", "", 17, UiKit.Ink, TextAlignmentOptions.Center);
             _qty.gameObject.AddComponent<LayoutElement>().preferredWidth = 36;
-            UiKit.Button(qty, "+", 32, 26, () => {
+            _plus = UiKit.Button(qty, "+", 32, 26, () => {
                 if (_entry != null) { _entry.Qty++; owner.MarkDirty(); }
             });
 
@@ -1303,6 +1352,68 @@ public class PlannerPanel {
                 if (on) Mark(_quality[q], e.Quality == q + 1);
             }
             _noLevels.gameObject.SetActive(max <= 1);
+            // Тотем в двух экземплярах — не заказ, а ошибка счёта: его состав
+            // и так всё, что ему нужно.
+            bool counted = it == null || !it.Totem;
+            _minus.gameObject.SetActive(counted);
+            _plus.gameObject.SetActive(counted);
+            if (!_go.activeSelf) _go.SetActive(true);
+        }
+
+        public void Hide() { if (_go.activeSelf) _go.SetActive(false); }
+
+        public GameObject Go { get { return _go; } }
+    }
+
+    /// <summary>
+    /// Вид построек под строкой тотема: «Костёр ×2 · 4 дерева, 10 камня».
+    /// Только для чтения — кнопок нет, количеством правит сам тотем.
+    /// Отступ слева ставит иконку под название тотема, чтобы было видно,
+    /// чьи это строки.
+    /// </summary>
+    class TotemPieceRow {
+        /// <summary>Больше строк на один тотем не показываем: у чертежа базы
+        /// бывает три десятка видов, и они вытеснили бы весь план.</summary>
+        public const int Max = 8;
+
+        readonly GameObject _go;
+        readonly Image _icon;
+        readonly TextMeshProUGUI _name, _mats;
+
+        public GameObject Go { get { return _go; } }
+
+        public TotemPieceRow(Transform parent) {
+            var rt = UiKit.Row(parent, "totem-piece", 22);
+            _go = rt.gameObject;
+            UiKit.Horizontal(rt, 6, 36, 4 + (int)(DelWidth + BlockGap));
+            _icon = UiKit.Icon(rt, null, 18);
+            _name = UiKit.Label(rt, "name", "", 14, UiKit.Dim);
+            var nle = _name.gameObject.AddComponent<LayoutElement>();
+            nle.flexibleWidth = 1;
+            nle.minWidth = 0;
+            _mats = UiKit.Label(rt, "mats", "", 13, UiKit.Dim, TextAlignmentOptions.Right);
+            var mle = _mats.gameObject.AddComponent<LayoutElement>();
+            mle.preferredWidth = LevelsWidth + QtyWidth + BlockGap;
+            mle.minWidth = 60;
+        }
+
+        public void Show(PlanTotems.Group g) {
+            _icon.sprite = g.Icon;
+            _icon.color = g.Icon != null ? Color.white : Color.clear;
+            _name.text = g.Count > 1 ? g.Name + " ×" + g.Count : g.Name;
+            // Сначала то, чего нужно больше: оно и определяет вылазку.
+            _mats.text = string.Join(", ", g.Need
+                .OrderByDescending(kv => kv.Value)
+                .ThenBy(kv => GameData.NameOf(kv.Key))
+                .Select(kv => kv.Value + " " + GameData.NameOf(kv.Key)));
+            if (!_go.activeSelf) _go.SetActive(true);
+        }
+
+        public void ShowMore(int rest) {
+            _icon.sprite = null;
+            _icon.color = Color.clear;
+            _name.text = L.TotemMore(rest);
+            _mats.text = "";
             if (!_go.activeSelf) _go.SetActive(true);
         }
 

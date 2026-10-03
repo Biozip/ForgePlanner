@@ -155,11 +155,17 @@ Not a promise — a checkable fact. These are all the game types the compiled
 `Forgeplan.dll` refers to at all, taken from the assembly's TypeRef table:
 
 ```
-Character  Console  Container  CookingStation  CraftingStation  Fermenter
-Game  GameCamera  Humanoid  Inventory  InventoryGui  ItemDrop  Localization
-Menu  Minimap  ObjectDB  Piece  PieceTable  Player  PlayerProfile  Recipe
-Smelter  TextViewer  Trader  Version  ZNetScene  ZNetView  ZoneSystem
+Attack  Character  Console  Container  CookingStation  CraftingStation
+Fermenter  Game  GameCamera  GlobalKeys  HitData  Humanoid  Inventory
+InventoryGui  ItemDrop  Localization  Menu  MessageHud  Minimap  ObjectDB
+Piece  PieceTable  Player  PlayerProfile  Recipe  Skills  Smelter
+StatusEffect  TextViewer  Trader  Version  ZNetScene  ZNetView  ZoneSystem
 ```
+
+(Rechecked for 1.5.0 with `System.Reflection.Metadata` over the built DLL.
+`Attack`, `HitData`, `Skills` and `StatusEffect` come from the item card, which
+asks the game for the same numbers its own tooltip shows; `MessageHud` is the
+"no plan totem nearby" line.)
 
 Sending anything over the network in Valheim requires `ZRoutedRpc`, `ZNet`,
 `ZPackage`, `ZDO` or `ZSteamSocket`. **None of them is in that list.**
@@ -171,6 +177,12 @@ all recipes unlocked.
 From `System.IO` the assembly uses `Stream` and `MemoryStream` only, to read its
 own embedded icons out of the DLL. No file and no network type appears
 anywhere.
+
+Reflection is used in two places, both read-only: carrying the pre-1.4.0
+`HideUnreached` value over from BepInEx's unbound config lines, and reading
+PlanBuild's plan totems when PlanBuild is installed — its totem class is
+internal, so there is no other way in. A totem is identified by its position,
+not by its `ZDO`.
 
 Eleven Harmony patches, all of them about this mod's own window:
 

@@ -31,6 +31,14 @@ public static class L {
     public static string Pinned { get { return T("Pinned", "Закреплено"); } }
     public static string PinPlan { get { return T("Pin", "Закрепить"); } }
 
+    /* Что из плана уже сделано: строка раскрывается на экземпляры. */
+    public static string MadeSummary(int n) { return T(n + " already made", "уже есть: " + n); }
+    public static string UnitNew { get { return T("not made yet", "ещё не сделан"); } }
+    public static string UnitDone { get { return T("done", "готов"); } }
+    public static string UnitHas(int level) {
+        return T("have it at level " + level, "есть, ур. " + level);
+    }
+
     /* Тотемы PlanBuild. */
     public static string AddTotem { get { return T("+ Totem", "+ Тотем"); } }
     public static string NoTotemNearby {

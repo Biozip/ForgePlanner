@@ -50,7 +50,12 @@ public static class UiKit {
     public static readonly Color Faint = new Color(0.42f, 0.40f, 0.37f, 0.55f);
 
     public static bool Init() {
-        if (Ready) return true;
+        // Ready само по себе не ответ: канва — объект сцены, и при выходе из
+        // мира игра её уничтожает, а в следующем мире строит новую. Старая
+        // ссылка при этом не становится null для C#, только для Unity, и всё
+        // построенное на ней падало с NullReferenceException на каждом кадре.
+        if (Ready && CanvasRoot != null) return true;
+        Ready = false;
         var gui = InventoryGui.instance;
         if (gui == null) return false;              // интерфейс ещё не поднялся
 

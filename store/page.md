@@ -26,6 +26,11 @@ of going quietly stale.
 - **Smelting included.** Coal, smelting time and how many loads each station
   needs.
 - **Counts what you already have.** Your backpack plus nearby chests.
+- **Knows what is already made.** Four iron swords at level 2, two of the group
+  already hold level 1 ones: open the row and mark them, and the plan charges
+  those two only for the upgrade. See below.
+- **Keeps your plan.** The plan and the pinned list survive quitting the game,
+  one per world and character.
 - **Tells you which stations you need** — and whether one is standing nearby,
   how far, in which direction, and at what level. If the one you have is too
   low, it says which level the plan wants. If there is none, one button adds
@@ -71,6 +76,21 @@ up. The text comes in the game's language.
 
 ![Hold Alt: the set bonus in full](media/04-card-set-bonus.png)
 
+## What is already made
+
+A plan starts from nothing: four iron swords at level 2 is four swords crafted
+and four upgrades paid. On a server that is rarely true — two of the group
+already carry level 1 swords, someone has a banded shield.
+
+Press the arrow next to the row, and it opens into one line per item: **No.1,
+No.2, No.3, No.4**, each with the level buttons up to the one you plan. Click
+**1** on a sword someone already has at level 1, and from then on the plan
+counts only its upgrade; click the planned level, and that one is done. Click
+the marked button again to clear it. A closed row says how many are already
+made.
+
+The marks are part of the plan: they are saved with it and pinned with it.
+
 ## Pin the plan
 
 **Pin the plan and close the window.** A copy of it stays on screen in a small
@@ -79,8 +99,13 @@ you are and how far there is to go. It counts your backpack only: the window
 counts nearby chests as well, but out in the field the question is whether you
 have it on you, not whether it is somewhere at home. It is a copy on purpose:
 wiping the plan to price up something else does not wipe what you pinned.
-Clicks pass straight through it, and you can drag it somewhere else while the
-Esc menu is open.
+Clicks pass straight through it. While the Esc menu is open you can drag it
+somewhere else, make it bigger or smaller with **−** and **+**, or unpin it
+with **×**.
+
+Under the title, the icons of what you pinned, so a line like **Stone 0 / 94**
+says what it is for. Gathered lines sink to the bottom and dim; set
+**HideGathered** in the config to drop them from the panel altogether.
 
 ![The pinned plan next to the minimap](media/05-pinned.png)
 
@@ -175,7 +200,8 @@ like any other mod. By hand:
 
 Client-side only. It does not touch saves, world data or networking, so it is
 safe to add to an existing world and safe to remove again — uninstalling leaves
-nothing behind but the config file.
+nothing behind but the config file and your saved plans, small text files in
+**BepInEx/config/forgeplanner/**.
 
 ## Configuration
 
@@ -198,6 +224,8 @@ nothing behind but the config file.
 | `Pin` | `OffsetY` | `268` | Distance from the top or bottom; the default clears the minimap |
 | `Pin` | `RefreshSeconds` | `1` | How often the remaining amounts are recounted |
 | `Pin` | `MaxRows` | `8` | How many materials to list before collapsing the rest |
+| `Pin` | `Scale` | `1` | Size of the pinned panel, `0.6` to `2.5`; written by its − and + buttons |
+| `Pin` | `HideGathered` | `false` | Hide materials you already carry enough of, instead of moving them to the bottom |
 | `Tooltip` | `Enabled` | `true` | Show the item card when hovering a row |
 | `Tooltip` | `Compare` | `true` | Compare the hovered item with what you have equipped |
 | `Tooltip` | `DetailsKey` | `LeftAlt` | Hold it over the card for the full set bonus and effects; `None` turns it off |

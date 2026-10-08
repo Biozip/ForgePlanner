@@ -72,6 +72,10 @@ public class PlannerPanel {
     readonly List<CatalogRow> _catalogRows = new List<CatalogRow>();
     readonly List<CartRow> _cartRows = new List<CartRow>();
     readonly List<TotemPieceRow> _pieceRows = new List<TotemPieceRow>();
+    readonly List<UnitRow> _unitRows = new List<UnitRow>();
+    /// <summary>Какие строки плана раскрыты на экземпляры. Состояние окна, а
+    /// не плана: в файл не пишется, после перезапуска всё свёрнуто.</summary>
+    readonly HashSet<Entry> _open = new HashSet<Entry>();
     readonly List<TotalPair> _pairs = new List<TotalPair>();
     readonly List<TotalRow> _notes = new List<TotalRow>();
 
@@ -539,6 +543,10 @@ public class PlannerPanel {
     const float LevelsWidth = 4 * 28 + 3 * 4;    // четыре кнопки уровня
     const float QtyWidth = 32 + 36 + 32 + 2 * 4; // «−», число, «+»
     const float DelWidth = 28;
+    const float FoldWidth = 18;                  // стрелка «раскрыть»
+    /// <summary>Где в строке плана начинается название: отступ, стрелка,
+    /// иконка и зазоры между ними. По нему выравниваются вложенные строки.</summary>
+    const int NameIndent = 4 + (int)FoldWidth + 6 + 26 + 6;
     const float BlockGap = 14;                   // зазор между блоками
 
     /// <summary>Пустое место заданной ширины — зазор между блоками строки.</summary>
@@ -570,6 +578,7 @@ public class PlannerPanel {
     void BuildCartColumns(Transform parent) {
         var head = UiKit.Row(parent, "cart-columns", 18);
         UiKit.Horizontal(head, 6, 10, 23);
+        Gap(head, FoldWidth);
         Gap(head, 26);
         var item = ColumnLabel(head, L.ColItem, TextAlignmentOptions.Left);
         item.gameObject.GetComponent<LayoutElement>().flexibleWidth = 1;
@@ -755,12 +764,21 @@ public class PlannerPanel {
 
         // Под строкой тотема — его постройки по видам. Строки из двух пулов,
         // поэтому порядок в списке ставим руками.
-        int slot = 0, sub = 0;
+        int slot = 0, sub = 0, units = 0;
+        _open.RemoveWhere(x => !Planner.Cart.Contains(x));
         for (int i = 0; i < Planner.Cart.Count; i++) {
             if (i >= _cartRows.Count) _cartRows.Add(new CartRow(_cart, this));
             var e = Planner.Cart[i];
-            _cartRows[i].Show(e);
+            _cartRows[i].Show(e, _open.Contains(e));
             _cartRows[i].Go.transform.SetSiblingIndex(slot++);
+            // Раскрытая строка — по ряду на каждый экземпляр: какой уже есть
+            // и на каком уровне.
+            if (_open.Contains(e) && Unfolds(GameData.Get(e.Id)))
+                for (int k = 0; k < e.Qty; k++) {
+                    if (units >= _unitRows.Count) _unitRows.Add(new UnitRow(_cart, this));
+                    _unitRows[units].Show(e, k);
+                    _unitRows[units++].Go.transform.SetSiblingIndex(slot++);
+                }
             if (!PlanTotems.IsTotem(e.Id)) continue;
             var groups = PlanTotems.Groups(e.Id).Where(g => g.Need.Count > 0).ToList();
             int shown = groups.Count > TotemPieceRow.Max ? TotemPieceRow.Max - 1 : groups.Count;
@@ -774,6 +792,7 @@ public class PlannerPanel {
         }
         for (int i = Planner.Cart.Count; i < _cartRows.Count; i++) _cartRows[i].Hide();
         for (int i = sub; i < _pieceRows.Count; i++) _pieceRows[i].Hide();
+        for (int i = units; i < _unitRows.Count; i++) _unitRows[i].Hide();
 
         int pieces = Planner.Cart.Sum(e => e.Qty);
         _cartCount.text = pieces > 0 ? L.TotalItems + pieces : "";
@@ -923,6 +942,21 @@ public class PlannerPanel {
     }
 
     public void MarkDirty() { _planDirty = true; }
+
+    /// <summary>
+    /// Раскрывается ли строка на экземпляры. Только у того, что улучшают:
+    /// «уже есть на первом уровне» у еды или стрел ничего не значит — их
+    /// запас и так считает рюкзак с сундуками. И не у того, что крафтится
+    /// пачкой: у пачки нет отдельных экземпляров.
+    /// </summary>
+    static bool Unfolds(ItemDef it) {
+        return it != null && !it.Totem && it.HasRecipe && it.MaxQuality > 1 && it.Out <= 1;
+    }
+
+    void ToggleOpen(Entry e) {
+        if (!_open.Remove(e)) _open.Add(e);
+        MarkDirty();
+    }
 
     /* ————————————————————————— настройки ————————————————————————— */
 
@@ -1252,6 +1286,7 @@ public class PlannerPanel {
         readonly TextMeshProUGUI _name, _qty, _noLevels;
         readonly List<Button> _quality = new List<Button>();
         readonly Button _minus, _plus;
+        readonly Image _fold;
         Entry _entry;
 
         static readonly Color DelIdle = new Color(0.66f, 0.32f, 0.27f);
@@ -1281,6 +1316,20 @@ public class PlannerPanel {
             var rt = UiKit.Row(parent, "row", 32);
             _go = rt.gameObject;
             UiKit.Horizontal(rt, 6, 4, 4);
+
+            // Стрелка «раскрыть на экземпляры». Место под неё есть у каждой
+            // строки, даже где раскрывать нечего: иначе иконки и названия
+            // соседних строк стояли бы вразнобой.
+            var fold = Block(rt, "fold", FoldWidth);
+            _fold = UiKit.Icon(fold, Art.Get("arrow"), 12);
+            _fold.color = UiKit.Dim;
+            _fold.raycastTarget = true;
+            var foldBtn = _fold.gameObject.AddComponent<Button>();
+            foldBtn.transition = Selectable.Transition.None;
+            foldBtn.onClick.AddListener(() => { if (_entry != null) owner.ToggleOpen(_entry); });
+            var foldHover = _fold.gameObject.AddComponent<Hover>();
+            foldHover.Enter = () => _fold.color = UiKit.Gold;
+            foldHover.Exit = () => _fold.color = UiKit.Dim;
 
             _icon = UiKit.Icon(rt, null, 26);
             _name = UiKit.Label(rt, "name", "", 16, UiKit.Ink);
@@ -1312,7 +1361,11 @@ public class PlannerPanel {
             Gap(rt, BlockGap);
             var qty = Block(rt, "qty", QtyWidth);
             _minus = UiKit.Button(qty, "\u2212", 32, 26, () => {
-                if (_entry != null && _entry.Qty > 1) { _entry.Qty--; owner.MarkDirty(); }
+                if (_entry != null && _entry.Qty > 1) {
+                    _entry.Qty--;
+                    _entry.Fit();
+                    owner.MarkDirty();
+                }
             });
             _qty = UiKit.Label(qty, "qty", "", 17, UiKit.Ink, TextAlignmentOptions.Center);
             _qty.gameObject.AddComponent<LayoutElement>().preferredWidth = 36;
@@ -1337,12 +1390,20 @@ public class PlannerPanel {
             hover.Exit = () => owner._card.Leave(_go);
         }
 
-        public void Show(Entry e) {
+        public void Show(Entry e, bool open) {
             _entry = e;
             var it = GameData.Get(e.Id);
             _icon.sprite = it != null ? it.Icon : null;
             _icon.color = _icon.sprite != null ? Color.white : Color.clear;
             _name.text = it != null ? it.Shown : e.Id;
+            int made = e.MadeCount;
+            if (made > 0)
+                _name.text += "  <size=80%><color=#8A8172>" + L.MadeSummary(made) + "</color></size>";
+
+            bool folds = Unfolds(it);
+            if (_fold.gameObject.activeSelf != folds) _fold.gameObject.SetActive(folds);
+            // Стрелка смотрит вверх; свёрнуто — вправо, раскрыто — вниз.
+            if (folds) _fold.transform.localRotation = Quaternion.Euler(0f, 0f, open ? 180f : -90f);
             _qty.text = e.Qty.ToString();
 
             int max = it != null ? it.MaxQuality : 1;
@@ -1366,6 +1427,70 @@ public class PlannerPanel {
     }
 
     /// <summary>
+    /// Один экземпляр раскрытой строки: «№2 · есть, ур. 1» и кнопки уровней.
+    ///
+    /// Кнопки стоят ровно под кнопками уровня у самой строки, и их столько,
+    /// сколько нужно по плану: у мечей второго уровня — 1 и 2. Нажатая —
+    /// «этот уже есть на таком уровне», нажатая на целевом — «готов». Нажать
+    /// отмеченную ещё раз — снять отметку: экземпляра ещё нет.
+    /// </summary>
+    class UnitRow {
+        readonly GameObject _go;
+        readonly TextMeshProUGUI _name;
+        readonly List<Button> _levels = new List<Button>();
+        Entry _entry;
+        int _index;
+
+        public GameObject Go { get { return _go; } }
+
+        public UnitRow(Transform parent, PlannerPanel owner) {
+            var rt = UiKit.Row(parent, "unit", 26);
+            _go = rt.gameObject;
+            UiKit.Horizontal(rt, 6, 4, 4);
+            Gap(rt, FoldWidth);
+            Gap(rt, 26);
+            _name = UiKit.Label(rt, "name", "", 14, UiKit.Dim);
+            var nle = _name.gameObject.AddComponent<LayoutElement>();
+            nle.flexibleWidth = 1;
+            nle.minWidth = 0;
+
+            Gap(rt, BlockGap);
+            var levels = Block(rt, "levels", LevelsWidth);
+            for (int q = 1; q <= 4; q++) {
+                int level = q;
+                _levels.Add(UiKit.Button(levels, q.ToString(), 28, 22, () => {
+                    if (_entry == null) return;
+                    while (_entry.Made.Count <= _index) _entry.Made.Add(0);
+                    _entry.Made[_index] = Mathf.Min(_entry.Made[_index], _entry.Quality) == level
+                        ? 0 : level;
+                    owner.MarkDirty();
+                }, 13));
+            }
+            Gap(rt, BlockGap);
+            Gap(rt, QtyWidth);
+            Gap(rt, BlockGap);
+            Gap(rt, DelWidth);
+        }
+
+        public void Show(Entry e, int index) {
+            _entry = e;
+            _index = index;
+            int target = Mathf.Max(1, e.Quality);
+            int had = index < e.Made.Count ? Mathf.Min(e.Made[index], target) : 0;
+            _name.text = "\u2116" + (index + 1) + "  \u00B7  "
+                + (had <= 0 ? L.UnitNew : had >= target ? L.UnitDone : L.UnitHas(had));
+            for (int q = 0; q < _levels.Count; q++) {
+                bool on = q < target;
+                _levels[q].gameObject.SetActive(on);
+                if (on) Mark(_levels[q], had == q + 1);
+            }
+            if (!_go.activeSelf) _go.SetActive(true);
+        }
+
+        public void Hide() { if (_go.activeSelf) _go.SetActive(false); }
+    }
+
+    /// <summary>
     /// Вид построек под строкой тотема: «Костёр ×2 · 4 дерева, 10 камня».
     /// Только для чтения — кнопок нет, количеством правит сам тотем.
     /// Отступ слева ставит иконку под название тотема, чтобы было видно,
@@ -1385,7 +1510,7 @@ public class PlannerPanel {
         public TotemPieceRow(Transform parent) {
             var rt = UiKit.Row(parent, "totem-piece", 22);
             _go = rt.gameObject;
-            UiKit.Horizontal(rt, 6, 36, 4 + (int)(DelWidth + BlockGap));
+            UiKit.Horizontal(rt, 6, NameIndent, 4 + (int)(DelWidth + BlockGap));
             _icon = UiKit.Icon(rt, null, 18);
             _name = UiKit.Label(rt, "name", "", 14, UiKit.Dim);
             var nle = _name.gameObject.AddComponent<LayoutElement>();

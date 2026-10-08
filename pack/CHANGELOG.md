@@ -2,6 +2,26 @@
 
 Русская версия с подробностями — `Versions.md` в репозитории.
 
+## 1.6.0
+
+- Mark what is already made: the arrow next to a row opens it into one line
+  per item, each with level buttons up to the planned one. Mark a sword
+  someone already has at level 1, and the plan charges it only for the
+  upgrade; mark the planned level, and it costs nothing. A closed row says how
+  many are already made.
+- The plan and the pinned list are kept between sessions, one file per world
+  and character in BepInEx/config/forgeplanner/. Nothing is written to the
+  world or to saves.
+- The pinned panel shows the icons of what is pinned under its title.
+- New option [Pin] HideGathered: drop gathered lines from the pinned panel
+  instead of moving them to the bottom. Off by default.
+- While the Esc menu is open, the pinned panel has − and + to resize it
+  (saved as [Pin] Scale) and × to unpin.
+- Fixed: logging out through the Esc menu could save the pinned panel's
+  position as 0, 0, putting it over the minimap next time. A saved 0, 0 is
+  reset to the default.
+- Fixed: errors flooding the log after leaving a world and joining another.
+
 ## 1.5.0
 
 - PlanBuild support: with PlanBuild installed, a **+ Totem** button above the

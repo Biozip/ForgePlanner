@@ -41,6 +41,26 @@ public static class PinHud {
     public static float Interval = 1f;
     /// <summary>Сколько строк показывать; остальное сворачивается в «ещё N».</summary>
     public static int MaxRows = 8;
+    /// <summary>
+    /// Прятать собранное. По умолчанию выключено: собранная строка уходит
+    /// вниз и тускнеет, и по списку видно, из чего он вообще состоял. Но в
+    /// длинном заказе группы собранное занимает место, а смотрят на панель
+    /// ради того, чего ещё нет, — попросил игрок с выделенного сервера.
+    /// </summary>
+    public static bool HideDone;
+
+    /// <summary>Сколько иконок закреплённого показывать под заголовком.</summary>
+    const int MaxIcons = 8;
+
+    /// <summary>
+    /// Масштаб панели. На мониторе 4K при обычном размере интерфейса она
+    /// мелкая — попросили сделать крупнее. Меняется кнопками «−» и «+» в
+    /// заголовке, пока открыто меню Esc, и пишется в конфиг через OnScaled.
+    /// </summary>
+    public static float Scale = 1f;
+    public const float MinScale = 0.6f, MaxScale = 2.5f;
+    public static System.Action<float> OnScaled;
+    static GameObject _tools;
 
     const float Width = 252f;
 
@@ -55,6 +75,9 @@ public static class PinHud {
     static RectTransform _list;
     static readonly List<Row> _rows = new List<Row>();
     static TextMeshProUGUI _more;
+    static RectTransform _icons;
+    static readonly List<Image> _iconPool = new List<Image>();
+    static TextMeshProUGUI _iconsMore;
 
     static Image _bg;
     static TextMeshProUGUI _move;
@@ -114,6 +137,7 @@ public static class PinHud {
         _dragMode = on;
         if (_bg != null) _bg.raycastTarget = on;
         if (_move != null) _move.gameObject.SetActive(on);
+        if (_tools != null) _tools.SetActive(on);
         // Меню Esc — чужое окно на той же канве, и нарисовано оно может быть
         // поверх нашего. Тогда до панели не дотянуться мышью: лучи упрутся в
         // меню. Поэтому на время перетаскивания поднимаем себя наверх.
@@ -133,6 +157,11 @@ public static class PinHud {
         // Утащить панель за край экрана можно, а достать обратно уже нечем:
         // она там и кликов не ловит, и не видна. Поэтому край держим.
         var area = ((RectTransform)_root.transform).rect;
+        // Выход из мира через меню Esc: меню закрывается уже посреди разборки
+        // сцены, и канва в этот миг бывает нулевого размера. Зажатое в неё
+        // положение — (0, 0), и до 1.6.0 оно записывалось в конфиг: при
+        // следующем входе панель стояла в углу на месте миникарты.
+        if (Player.m_localPlayer == null || area.width < 200f || area.height < 200f) return;
         now.x = Mathf.Clamp(now.x, 0f, Mathf.Max(0f, area.width - 60f));
         now.y = Mathf.Clamp(now.y, 0f, Mathf.Max(0f, area.height - 30f));
         _panel.anchoredPosition = new Vector2(left ? now.x : -now.x,
@@ -166,15 +195,22 @@ public static class PinHud {
         _root = null;
         _panel = null;
         _bg = null;
-        _title = _empty = _more = _move = null;
+        _title = _empty = _more = _move = _iconsMore = null;
         _list = null;
+        _icons = null;
+        _tools = null;
         _rows.Clear();
+        _iconPool.Clear();
         _dragMode = false;
         _dirty = true;
     }
 
     static bool Build() {
         if (!UiKit.Init()) return false;
+        // Панель могла уйти вместе со сценой, минуя Drop: пулы тогда держат
+        // уничтоженные строки и иконки. Строим всегда с чистого листа.
+        _rows.Clear();
+        _iconPool.Clear();
 
         _root = new GameObject("Forgeplan-pin", typeof(RectTransform));
         _root.transform.SetParent(UiKit.CanvasRoot, false);
@@ -189,6 +225,9 @@ public static class PinHud {
         _panel.anchoredPosition = new Vector2(left ? Offset.x : -Offset.x,
                                               top ? -Offset.y : Offset.y);
         _panel.sizeDelta = new Vector2(Width, 0f);
+        // Опорная точка — в том углу, к которому панель прижата, поэтому
+        // растёт она от угла, а не разъезжается в обе стороны.
+        _panel.localScale = Vector3.one * Scale;
 
         _bg = UiKit.Box(_panel, "bg", UiKit.PanelSprite, Back);
         _bg.raycastTarget = false;
@@ -210,7 +249,30 @@ public static class PinHud {
         fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         fit.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
 
-        _title = UiKit.Label(_panel, "title", L.Title, 14f, UiKit.Gold);
+        // Заголовок, а справа — «−», «+» и «×». Они видны только в меню Esc,
+        // как и подпись «можно перетащить»: в остальное время панель не
+        // ловит мышь вовсе, и кнопкам там нечего делать.
+        var head = UiKit.Row(_panel, "head", 20f);
+        UiKit.Horizontal(head, 4);
+        _title = UiKit.Label(head, "title", L.Title, 14f, UiKit.Gold);
+        var tle = _title.gameObject.AddComponent<LayoutElement>();
+        tle.flexibleWidth = 1;
+        tle.minWidth = 0;
+        var tools = UiKit.Rect(head, "tools");
+        UiKit.Horizontal(tools, 3);
+        UiKit.Button(tools, "\u2212", 22, 18, () => Rescale(-0.1f), 14);
+        UiKit.Button(tools, "+", 22, 18, () => Rescale(0.1f), 14);
+        UiKit.Button(tools, "\u00D7", 22, 18, Pin.Clear, 15);
+        _tools = tools.gameObject;
+        _tools.SetActive(false);
+
+        // Для чего этот список: иконки закреплённых позиций. Без них «камень
+        // 0 / 94» не говорит, на стену это или на печь, а заголовок «Закреплено
+        // · 3» — что за три позиции.
+        _icons = UiKit.Row(_panel, "icons", 20f);
+        UiKit.Horizontal(_icons, 3);
+        for (int i = 0; i < MaxIcons; i++) _iconPool.Add(UiKit.Icon(_icons, null, 18));
+        _iconsMore = UiKit.Label(_icons, "more", "", 12f, UiKit.Dim);
         UiKit.Row(_panel, "gap", 2f);
 
         _list = UiKit.Rect(_panel, "list");
@@ -247,13 +309,18 @@ public static class PinHud {
         // глазах и по нему не видно, из чего он вообще состоял. При равных
         // числах сортируем по имени, чтобы строки не перетасовывались сами
         // между пересчётами.
-        var rows = Pin.Rows()
+        ShowIcons();
+
+        var all0 = Pin.Rows();
+        var rows = all0.Where(r => !HideDone || !r.Done)
                       .OrderBy(r => r.Done)
                       .ThenByDescending(r => r.Need - r.Have)
                       .ThenBy(r => GameData.NameOf(r.Id))
                       .ToList();
 
-        bool all = rows.Count > 0 && rows.All(r => r.Done);
+        // С HideDone собранные строки уже отсеяны: пустой список при непустом
+        // заказе и значит «всё собрано».
+        bool all = all0.Count > 0 && all0.All(r => r.Done);
         _empty.gameObject.SetActive(rows.Count == 0 || all);
         if (rows.Count == 0 || all) _empty.text = L.PinDone;
 
@@ -267,6 +334,30 @@ public static class PinHud {
         int rest = rows.Count - shown;
         _more.gameObject.SetActive(rest > 0);
         if (rest > 0) _more.text = L.PinMore + rest;
+    }
+
+    static void Rescale(float by) {
+        float next = Mathf.Clamp(Mathf.Round((Scale + by) * 10f) / 10f, MinScale, MaxScale);
+        if (Mathf.Approximately(next, Scale)) return;
+        Scale = next;
+        if (_panel != null) _panel.localScale = Vector3.one * Scale;
+        if (OnScaled != null) OnScaled(Scale);
+    }
+
+    static void ShowIcons() {
+        var ids = Pin.Items.Select(e => e.Id).Distinct().ToList();
+        int shown = 0;
+        for (int i = 0; i < _iconPool.Count; i++) {
+            var it = i < ids.Count ? GameData.Get(ids[i]) : null;
+            var img = _iconPool[i];
+            bool on = it != null && it.Icon != null;
+            if (on) { img.sprite = it.Icon; img.color = Color.white; shown++; }
+            if (img.gameObject.activeSelf != on) img.gameObject.SetActive(on);
+        }
+        int rest = ids.Count - Mathf.Min(ids.Count, _iconPool.Count);
+        _iconsMore.text = rest > 0 ? "+" + rest : "";
+        bool any = shown > 0 || rest > 0;
+        if (_icons.gameObject.activeSelf != any) _icons.gameObject.SetActive(any);
     }
 
     /// <summary>Строка «иконка — название — сколько ещё».</summary>

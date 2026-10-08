@@ -159,13 +159,15 @@ Attack  Character  Console  Container  CookingStation  CraftingStation
 Fermenter  Game  GameCamera  GlobalKeys  HitData  Humanoid  Inventory
 InventoryGui  ItemDrop  Localization  Menu  MessageHud  Minimap  ObjectDB
 Piece  PieceTable  Player  PlayerProfile  Recipe  Skills  Smelter
-StatusEffect  TextViewer  Trader  Version  ZNetScene  ZNetView  ZoneSystem
+StatusEffect  TextViewer  Trader  Version  World  WorldGenerator  ZNetScene
+ZNetView  ZoneSystem
 ```
 
-(Rechecked for 1.5.0 with `System.Reflection.Metadata` over the built DLL.
+(Rechecked for 1.6.0 with `System.Reflection.Metadata` over the built DLL.
 `Attack`, `HitData`, `Skills` and `StatusEffect` come from the item card, which
 asks the game for the same numbers its own tooltip shows; `MessageHud` is the
-"no plan totem nearby" line.)
+"no plan totem nearby" line; `World` and `WorldGenerator` give the world's name
+and seed, which name the file the plan is kept in.)
 
 Sending anything over the network in Valheim requires `ZRoutedRpc`, `ZNet`,
 `ZPackage`, `ZDO` or `ZSteamSocket`. **None of them is in that list.**
@@ -174,9 +176,12 @@ method called on it is `IsValid()`. `ZoneSystem` is used for one read,
 `GetGlobalKey`, to find out which bosses are down and whether the world has
 all recipes unlocked.
 
-From `System.IO` the assembly uses `Stream` and `MemoryStream` only, to read its
-own embedded icons out of the DLL. No file and no network type appears
-anywhere.
+From `System.IO` the assembly uses `Stream` and `MemoryStream` to read its own
+embedded icons out of the DLL, and `File`, `Directory` and `Path` for one thing
+only: since 1.6.0 the plan and the pinned list are kept between sessions in
+`BepInEx/config/forgeplanner/<world>-<seed>--<character>.plan`, one small text
+file per world and character. Nothing is written anywhere else, and no network
+type appears anywhere.
 
 Reflection is used in two places, both read-only: carrying the pre-1.4.0
 `HideUnreached` value over from BepInEx's unbound config lines, and reading

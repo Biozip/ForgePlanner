@@ -8,6 +8,36 @@ public class Entry {
     public string Id;
     public int Qty = 1;
     public int Quality = 1;
+
+    /// <summary>
+    /// Что из этого уже сделано: по экземпляру, на каком уровне он сейчас.
+    /// 0 — ещё не сделан. Четыре меча второго уровня, у двоих уже есть мечи
+    /// первого, — это [1, 1, 0, 0]: двоим только доплата за уровень, двоим
+    /// меч с нуля.
+    ///
+    /// Попросил игрок с выделенного сервера: в группе часть снаряжения уже
+    /// на руках, и план «с нуля» завышал сумму. Пусто — ничего не отмечено,
+    /// как было до 1.6.0. Длина не больше Qty, см. Fit.
+    /// </summary>
+    public List<int> Made = new List<int>();
+
+    /// <summary>Сколько экземпляров отмечено как уже сделанные.</summary>
+    public int MadeCount {
+        get { int n = 0; foreach (var h in Made) if (h > 0) n++; return n; }
+    }
+
+    /// <summary>Подогнать отметки под количество: прибавили меч — новый
+    /// ещё не сделан; убавили — первыми уходят несделанные.</summary>
+    public void Fit() {
+        while (Made.Count > Qty) {
+            int i = Made.LastIndexOf(0);
+            Made.RemoveAt(i >= 0 ? i : Made.Count - 1);
+        }
+    }
+
+    public Entry Clone() {
+        return new Entry { Id = Id, Qty = Qty, Quality = Quality, Made = new List<int>(Made) };
+    }
 }
 
 /// <summary>Строка блока «Переработка».</summary>
@@ -44,11 +74,12 @@ public static class Planner {
 
     static int QtyOf(Entry e) => e.Qty * (Players < 1 ? 1 : Players);
 
-    /// <summary>Сумма доплат с первого уровня по нужный — как levelCost().</summary>
-    static Dictionary<string, int> LevelCost(ItemDef it, int quality) {
+    /// <summary>Сумма доплат с уровня from по нужный — как levelCost().
+    /// from = 0 — вещи ещё нет, платим и сам крафт.</summary>
+    static Dictionary<string, int> LevelCost(ItemDef it, int quality, int from = 0) {
         var t = new Dictionary<string, int>();
         int n = System.Math.Max(1, System.Math.Min(quality, it.Levels.Count));
-        for (int k = 0; k < n; k++)
+        for (int k = System.Math.Max(0, from); k < n; k++)
             foreach (var kv in it.Levels[k]) Add(t, kv.Key, kv.Value);
         return t;
     }
@@ -100,7 +131,15 @@ public static class Planner {
         foreach (var e in cart) {
             var it = GameData.Get(e.Id);
             if (it == null || !it.HasRecipe) continue;
-            int crafts = Ceil(QtyOf(e), it.Out);
+            // Уже сделанные экземпляры платят только доплаты со своего уровня,
+            // остальные — весь путь с нуля. Так же считает direct() в calc.js.
+            int made = 0;
+            foreach (var h in e.Made) {
+                if (h <= 0 || made >= QtyOf(e)) continue;
+                made++;
+                foreach (var kv in LevelCost(it, e.Quality, h)) Add(t, kv.Key, kv.Value);
+            }
+            int crafts = Ceil(QtyOf(e) - made, it.Out);
             foreach (var kv in LevelCost(it, e.Quality)) Add(t, kv.Key, kv.Value * crafts);
         }
         return t;

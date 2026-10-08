@@ -16,10 +16,10 @@ namespace Forgeplan {
 /// чтобы не потерять. Поэтому «Закрепить» снимает копию, и дальше два списка
 /// не связаны.
 ///
-/// Между запусками список не хранится. План в моде тоже не хранится, и
-/// заводить хранилище ради одной подсказки — значит решать, чьё оно: мира,
-/// персонажа или профиля. Вопрос не праздный (миров у человека несколько), и
-/// ответ на него стоит дороже самой возможности.
+/// С 1.6.0 закреплённое переживает выход из игры вместе с планом: оба лежат в
+/// файле на мир и персонажа, см. PlanStore. До того не хранилось ничего —
+/// ради одной подсказки заводить хранилище не стоило, а отметки «уже сделано»
+/// терять на выходе уже нельзя.
 /// </summary>
 public static class Pin {
     /// <summary>Что закреплено. Копии, а не ссылки на позиции плана.</summary>
@@ -66,8 +66,7 @@ public static class Pin {
     /// <summary>Закрепить весь план целиком, заменив прежнее закреплённое.</summary>
     public static void Set(List<Entry> entries) {
         Items.Clear();
-        foreach (var e in entries)
-            Items.Add(new Entry { Id = e.Id, Qty = e.Qty, Quality = e.Quality });
+        foreach (var e in entries) Items.Add(e.Clone());
         Fire();
     }
 
@@ -84,8 +83,15 @@ public static class Pin {
         if (cart.Count != Items.Count || cart.Count == 0) return false;
         foreach (var e in cart) {
             var mine = Find(e.Id);
-            if (mine == null || mine.Qty != e.Qty || mine.Quality != e.Quality) return false;
+            if (mine == null || mine.Qty != e.Qty || mine.Quality != e.Quality
+                || !SameMade(mine, e)) return false;
         }
+        return true;
+    }
+
+    static bool SameMade(Entry a, Entry b) {
+        if (a.Made.Count != b.Made.Count) return false;
+        for (int i = 0; i < a.Made.Count; i++) if (a.Made[i] != b.Made[i]) return false;
         return true;
     }
 

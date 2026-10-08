@@ -41,6 +41,8 @@ public class ForgeplanPlugin : BaseUnityPlugin {
     ConfigEntry<Ui.PinHud.Corner> _pinCorner;
     ConfigEntry<float> _pinX, _pinY, _pinInterval;
     ConfigEntry<int> _pinRows;
+    ConfigEntry<bool> _pinHideDone;
+    ConfigEntry<float> _pinScale;
     ConfigEntry<bool> _cardEnabled, _cardCompare;
     ConfigEntry<KeyCode> _cardDetails;
 
@@ -113,13 +115,29 @@ public class ForgeplanPlugin : BaseUnityPlugin {
         _pinInterval = Config.Bind("Pin", "RefreshSeconds", 1f,
             "How often the remaining amounts are recounted. Counting chests "
             + "walks the loaded scene, so this is not done every frame.");
+        _pinScale = Config.Bind("Pin", "Scale", 1f,
+            "Size of the pinned panel, 0.6 to 2.5. The - and + buttons on the panel, "
+            + "shown while the Esc menu is open, write this.");
+        _pinHideDone = Config.Bind("Pin", "HideGathered", false,
+            "Hide materials you already carry enough of, instead of moving them to the bottom");
         _pinRows = Config.Bind("Pin", "MaxRows", 8,
             "How many materials to list before collapsing the rest into a count.");
         Ui.PinHud.Enabled = _pinEnabled.Value;
         Ui.PinHud.Where = _pinCorner.Value;
+        // Ровно (0, 0) руками не ставят: это след ошибки до 1.6.0, когда
+        // выход из мира через меню Esc записывал нули (см. PinHud.Remember).
+        // Панель стояла бы на миникарте — возвращаем умолчание.
+        if (_pinX.Value == 0f && _pinY.Value == 0f) {
+            _pinX.Value = (float)_pinX.DefaultValue;
+            _pinY.Value = (float)_pinY.DefaultValue;
+            Log.LogInfo("закреплённый список: положение (0, 0) — след старой ошибки, вернул умолчание");
+        }
         Ui.PinHud.Offset = new Vector2(_pinX.Value, _pinY.Value);
         Ui.PinHud.Interval = _pinInterval.Value;
         Ui.PinHud.MaxRows = _pinRows.Value;
+        Ui.PinHud.HideDone = _pinHideDone.Value;
+        Ui.PinHud.Scale = Mathf.Clamp(_pinScale.Value, Ui.PinHud.MinScale, Ui.PinHud.MaxScale);
+        Ui.PinHud.OnScaled = v => { _pinScale.Value = v; };
         Pin.Changed = Ui.PinHud.Invalidate;
         // Панель таскают мышью, а живёт положение в конфиге: иначе его
         // пришлось бы подбирать заново каждый запуск.
@@ -222,6 +240,9 @@ public class ForgeplanPlugin : BaseUnityPlugin {
         // false, а две проверки на null каждый кадр ничего не стоят.
         if (_selfTest.Value && !SelfTest.Done && GameData.Build()) SelfTest.Run();
 
+        // План этого мира: прочесть при входе, дописывать при изменениях.
+        PlanStore.Tick();
+
         // Переключатель в окне настроек меняет Panel.Chests; запас читается
         // отсюда, поэтому значение переносится каждый кадр, а не при открытии.
         if (Panel.Visible) Stock.IncludeChests = Panel.Chests;
@@ -322,6 +343,8 @@ public class ForgeplanPlugin : BaseUnityPlugin {
 [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Shutdown))]
 static class ResetOnLeave {
     static void Postfix() {
+        // Сначала дописать план на диск: ниже он стирается.
+        PlanStore.Leave();
         ForgeplanPlugin.Panel.Drop();
         ForgeplanPlugin.Panel.ResetFilters();
         Ui.PinHud.Drop();
@@ -331,7 +354,8 @@ static class ResetOnLeave {
         Planner.Cart.Clear();
         // Закреплённое уходит вместе с планом: идентификаторы те же, но
         // каталог за ними будет уже из другого мира, а «нужно ещё 40 железа»
-        // от прошлого персонажа — подсказка хуже, чем никакой.
+        // от прошлого персонажа — подсказка хуже, чем никакой. Оба лежат в
+        // файле этого мира и вернутся, когда в него зайдут снова.
         Pin.Clear();
         SelfTest.Done = false;
     }

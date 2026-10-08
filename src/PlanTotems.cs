@@ -177,26 +177,44 @@ public static class PlanTotems {
 
     /// <summary>Завести строку под тотем. Зовётся перед тем, как id попадёт
     /// в план.</summary>
+    ///
+    /// Тотем может быть и не загружен: план с ним прочитан с диска, а игрок
+    /// заходит в мир далеко от базы. Тогда строка заводится сразу, пустой и
+    /// с пометкой «далеко», а название и иконку получает, когда тотем
+    /// подгрузится.
     public static void Track(string id) {
         if (!IsTotem(id) || Known.Any(s => s.Id == id)) return;
-        foreach (var c in Totems()) {
-            if (IdOf(c) != id) continue;
-            var piece = c.GetComponent<Piece>();
-            var title = piece != null ? Localization.instance.Localize(piece.m_name) : "Plan Totem";
-            Known.Add(new State {
-                Id = id, Key = KeyOf(c), Title = title,
-                Def = new ItemDef {
-                    Id = id, Name = title, Totem = true,
-                    Icon = piece != null ? piece.m_icon : null,
-                    Levels = { new Dictionary<string, int>() },
-                },
-            });
-            break;
+        var st = new State {
+            Id = id, Key = id.Substring(Prefix.Length), Title = DefaultTitle,
+            Def = new ItemDef {
+                Id = id, Name = DefaultTitle + L0(Ui.L.TotemFar), Totem = true,
+                Levels = { new Dictionary<string, int>() },
+            },
+        };
+        try {
+            foreach (var c in Totems())
+                if (IdOf(c) == id) { Dress(st, c); break; }
+        } catch (Exception e) {
+            Fail(e);
         }
+        Known.Add(st);
         _readAt = -100f;
     }
 
+    const string DefaultTitle = "Plan Totem";
+
+    /// <summary>Название и иконка — от живого тотема, один раз.</summary>
+    static void Dress(State st, Container c) {
+        if (st.Def.Icon != null) return;
+        var piece = c.GetComponent<Piece>();
+        if (piece == null) return;
+        st.Title = Localization.instance.Localize(piece.m_name);
+        st.Def.Icon = piece.m_icon;
+    }
+
     public static ItemDef Def(string id) {
+        if (!Available) return null;
+        if (!Known.Any(s => s.Id == id)) Track(id);
         if (Time.time - _readAt >= Every) Read();
         var st = Known.FirstOrDefault(s => s.Id == id);
         return st != null ? st.Def : null;
@@ -251,6 +269,7 @@ public static class PlanTotems {
     static string L0(string s) { return "  <size=80%><color=#8A8172>" + s + "</color></size>"; }
 
     static void ReadOne(State st, Container c, HashSet<int> claimed) {
+        Dress(st, c);
         var need = new Dictionary<string, int>();
         var stations = new List<string>();
         var groups = new Dictionary<string, Group>();

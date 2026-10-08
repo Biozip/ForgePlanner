@@ -16,6 +16,8 @@ Everything is read from your running game: recipes, upgrade costs, conversions, 
 [*][b]Raw materials or recipe materials.[/b] Either break everything down to ore, wood and hide, or stop at what the workbench actually asks for.[/*]
 [*][b]Smelting included.[/b] Coal, smelting time and how many loads each station needs.[/*]
 [*][b]Counts what you already have.[/b] Your backpack plus nearby chests.[/*]
+[*][b]Knows what is already made.[/b] Four iron swords at level 2, two of the group already hold level 1 ones: open the row and mark them, and the plan charges those two only for the upgrade. See below.[/*]
+[*][b]Keeps your plan.[/b] The plan and the pinned list survive quitting the game, one per world and character.[/*]
 [*][b]Tells you which stations you need[/b] — and whether one is standing nearby, how far, in which direction, and at what level. If the one you have is too low, it says which level the plan wants. If there is none, one button adds the station itself to the plan.[/*]
 [*][b]Names the trader for anything you cannot find.[/b] Some materials drop nowhere; the line says who sells it and for how much.[/*]
 [*][b]Buildings too.[/b] Walls, floors, workstations — the hammer menu is in the same catalogue.[/*]
@@ -39,9 +41,21 @@ Each row of the plan is the item, its quality level and how many; the columns ar
 
 [line]
 
+[size=4][b]What is already made[/b][/size]
+
+A plan starts from nothing: four iron swords at level 2 is four swords crafted and four upgrades paid. On a server that is rarely true — two of the group already carry level 1 swords, someone has a banded shield.
+
+Press the arrow next to the row, and it opens into one line per item: [b]No.1, No.2, No.3, No.4[/b], each with the level buttons up to the one you plan. Click [b]1[/b] on a sword someone already has at level 1, and from then on the plan counts only its upgrade; click the planned level, and that one is done. Click the marked button again to clear it. A closed row says how many are already made.
+
+The marks are part of the plan: they are saved with it and pinned with it.
+
+[line]
+
 [size=4][b]Pin the plan[/b][/size]
 
-[b]Pin the plan and close the window.[/b] A copy of it stays on screen in a small panel and fills in as you gather — [b]1 / 10[/b], so you can see both how far along you are and how far there is to go. It counts your backpack only: the window counts nearby chests as well, but out in the field the question is whether you have it on you, not whether it is somewhere at home. It is a copy on purpose: wiping the plan to price up something else does not wipe what you pinned. Clicks pass straight through it, and you can drag it somewhere else while the Esc menu is open.
+[b]Pin the plan and close the window.[/b] A copy of it stays on screen in a small panel and fills in as you gather — [b]1 / 10[/b], so you can see both how far along you are and how far there is to go. It counts your backpack only: the window counts nearby chests as well, but out in the field the question is whether you have it on you, not whether it is somewhere at home. It is a copy on purpose: wiping the plan to price up something else does not wipe what you pinned. Clicks pass straight through it. While the Esc menu is open you can drag it somewhere else, make it bigger or smaller with [b]−[/b] and [b]+[/b], or unpin it with [b]×[/b].
+
+Under the title, the icons of what you pinned, so a line like [b]Stone 0 / 94[/b] says what it is for. Gathered lines sink to the bottom and dim; set [b]HideGathered[/b] in the config to drop them from the panel altogether.
 
 [line]
 
@@ -103,7 +117,7 @@ With a mod manager (r2modman, Thunderstore Mod Manager, Vortex), install it like
 [*]Drop [b]Forgeplan.dll[/b] into [b]BepInEx/plugins/[/b].[/*]
 [/list]
 
-Client-side only. It does not touch saves, world data or networking, so it is safe to add to an existing world and safe to remove again — uninstalling leaves nothing behind but the config file.
+Client-side only. It does not touch saves, world data or networking, so it is safe to add to an existing world and safe to remove again — uninstalling leaves nothing behind but the config file and your saved plans, small text files in [b]BepInEx/config/forgeplanner/[/b].
 
 [line]
 
@@ -134,6 +148,8 @@ Client-side only. It does not touch saves, world data or networking, so it is sa
   OffsetY         268          Distance from the top or bottom; the default clears the minimap
   RefreshSeconds  1            How often the remaining amounts are recounted
   MaxRows         8            How many materials to list before collapsing the rest
+  Scale           1            Size of the pinned panel, 0.6 to 2.5; written by its − and + buttons
+  HideGathered    false        Hide materials you already carry enough of, instead of moving them to the bottom
 
 [Tooltip]
   Enabled         true         Show the item card when hovering a row

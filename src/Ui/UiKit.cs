@@ -458,6 +458,29 @@ public static class UiKit {
     /// Полоса нужна не для красоты: в каталоге пять сотен строк, и без неё
     /// ничто не подсказывает, что список вообще прокручивается.
     /// </summary>
+    /// <summary>
+    /// Прокрутка колесом: щелчок колеса двигает список на три строки, сколько
+    /// бы ни прислал ввод. Новый ввод Unity шлёт за щелчок то единицу, то долю
+    /// единицы, и множитель на величину давал то рывок, то ползание. Смотрим
+    /// только на направление.
+    /// </summary>
+    public class WheelStep : MonoBehaviour, UnityEngine.EventSystems.IScrollHandler {
+        public ScrollRect Scroll;
+        public const float Step = 96f;
+
+        public void OnScroll(UnityEngine.EventSystems.PointerEventData e) {
+            if (Scroll == null || Scroll.content == null || Scroll.viewport == null) return;
+            float d = e.scrollDelta.y;
+            if (Mathf.Approximately(d, 0f)) return;
+            var content = Scroll.content;
+            float max = Mathf.Max(0f, content.rect.height - Scroll.viewport.rect.height);
+            var p = content.anchoredPosition;
+            p.y = Mathf.Clamp(p.y - Mathf.Sign(d) * Step, 0f, max);
+            content.anchoredPosition = p;
+            Scroll.StopMovement();
+        }
+    }
+
     public static RectTransform ScrollBox(RectTransform frame, float spacing = 2f) {
         Box(frame, "bg", FieldSprite, new Color(0f, 0f, 0f, 0.50f));
 
@@ -478,9 +501,10 @@ public static class UiKit {
         var scroll = view.gameObject.AddComponent<ScrollRect>();
         scroll.horizontal = false;
         scroll.movementType = ScrollRect.MovementType.Clamped;
-        // Три строки за щелчок колеса. Одна — ровно столько ставит Unity по
-        // умолчанию — при списке в тысячу позиций превращает прокрутку в пытку.
-        scroll.scrollSensitivity = 102f;
+        // Колесо считаем сами, см. WheelStep: величина прокрутки у Unity 6 в
+        // игре не та, что в редакторе, и множитель 102 на деле полз еле-еле.
+        scroll.scrollSensitivity = 0f;
+        view.gameObject.AddComponent<WheelStep>().Scroll = scroll;
 
         var content = Rect(view, "content");
         content.anchorMin = new Vector2(0, 1);

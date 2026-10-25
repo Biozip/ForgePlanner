@@ -206,6 +206,8 @@ public class PlannerPanel {
         _root = null;
         _catalogRows.Clear();
         _cartRows.Clear();
+        _pieceRows.Clear();
+        _unitRows.Clear();
         _pairs.Clear();
         _notes.Clear();
         _matches.Clear();

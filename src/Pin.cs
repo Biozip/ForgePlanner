@@ -1,135 +1,139 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Forgeplan {
 
 /// <summary>
-/// Закреплённый список — то, что остаётся на экране, когда окно закрыто.
+/// Закреплённое: то, что остаётся на экране, когда окно закрыто.
 ///
-/// Планировщик отвечает на вопрос «что мне понадобится», но ответ живёт ровно
-/// столько, сколько открыто окно: дальше игрок идёт копать и держит числа в
-/// голове. Закреплённый список снимает это с головы — висит сбоку и убывает
-/// сам, пока руда падает в рюкзак.
+/// Закрепляется не копия, а сам план: подсказка на экране показывает ровно
+/// то, что сейчас в окне, и меняется вместе с ним. Две части закрепляются
+/// отдельно: «План» (что делаем) и «Материалы» (из чего). Можно одну, можно
+/// обе.
 ///
-/// Почему это отдельный список, а не сам план. План в окне переписывают:
-/// прикинул броню, стёр, прикинул мебель. Если бы подсказка на экране была
-/// зеркалом плана, она стирались бы вместе с ним — а закрепляют как раз затем,
-/// чтобы не потерять. Поэтому «Закрепить» снимает копию, и дальше два списка
-/// не связаны.
+/// «Материалы» закрепляются вместе со снимком хранилища: что лежит в
+/// сундуках рядом в момент закрепления, все предметы, плюс когда и где снимок
+/// снят. Рюкзак считается живым. В поле сундуков нет, а снимок их помнит;
+/// подобрал, выронил, скрафтил: рюкзак показывает как есть. План можно
+/// править и в поле: в снимке всё содержимое сундуков, а не только то, что
+/// было в плане. Вернулся домой и разложил по сундукам: обновил снимок.
 ///
-/// С 1.6.0 закреплённое переживает выход из игры вместе с планом: оба лежат в
-/// файле на мир и персонажа, см. PlanStore. До того не хранилось ничего —
-/// ради одной подсказки заводить хранилище не стоило, а отметки «уже сделано»
-/// терять на выходе уже нельзя.
+/// Что закреплено, хранится в файле плана, см. PlanStore.
 /// </summary>
 public static class Pin {
-    /// <summary>Что закреплено. Копии, а не ссылки на позиции плана.</summary>
-    public static readonly List<Entry> Items = new List<Entry>();
+    /// <summary>Закреплён список позиций плана.</summary>
+    public static bool Plan;
+    /// <summary>Закреплены «Материалы».</summary>
+    public static bool Gather;
 
-    /// <summary>Считать ли до сырья. Зеркалит переключатель в окне: две
-    /// разные картинки одного заказа сбивали бы с толку сильнее, чем
-    /// отсутствие настройки.</summary>
+    /// <summary>Считать ли до сырья. Зеркалит переключатель в окне и
+    /// хранится в файле плана, чтобы после перезахода вид был тот же.</summary>
     public static bool RawView = true;
 
-    /// <summary>Список поменялся — подсказке на экране пора пересобраться.</summary>
+    /* Снимок хранилища. */
+    /// <summary>Сколько каждого предмета лежало в сундуках рядом.</summary>
+    public static readonly Dictionary<string, int> Chests = new Dictionary<string, int>();
+    /// <summary>Сколько сундуков попало в счёт. Ноль: сняли вдали от сундуков.</summary>
+    public static int Boxes;
+    /// <summary>Когда снят, местное время.</summary>
+    public static System.DateTime At;
+    /// <summary>Где стоял игрок.</summary>
+    public static Vector3 Where;
+    /// <summary>Снимок есть.</summary>
+    public static bool HasSnapshot;
+
+    /// <summary>Закреплённое поменялось: подсказке на экране пора пересобраться.</summary>
     public static System.Action Changed;
 
     static void Fire() { if (Changed != null) Changed(); }
 
-    public static bool Any { get { return Items.Count > 0; } }
+    public static bool Any { get { return Plan || Gather; } }
 
-    public static bool Has(string id) {
-        return Find(id) != null;
-    }
+    static readonly List<Entry> None = new List<Entry>();
 
-    static Entry Find(string id) {
-        foreach (var e in Items) if (e.Id == id) return e;
-        return null;
-    }
+    /// <summary>Позиции, по которым считается закреплённое: сам план, пока
+    /// что-нибудь закреплено.</summary>
+    public static List<Entry> Items { get { return Any ? Planner.Cart : None; } }
 
-    /// <summary>Закрепить одну позицию из каталога или снять её. Качество
-    /// берётся то же, что стоит у этой вещи в плане, иначе первое: закрепляют
-    /// обычно то, что только что прикидывали.</summary>
-    public static void Toggle(string id) {
-        var had = Find(id);
-        if (had != null) {
-            Items.Remove(had);
-            Fire();
-            return;
-        }
-        int quality = 1;
-        foreach (var e in Planner.Cart)
-            if (e.Id == id) { quality = e.Quality; break; }
-        Items.Add(new Entry { Id = id, Qty = 1, Quality = quality });
+    public static void TogglePlan() { Plan = !Plan; Fire(); }
+    public static void ToggleGather() {
+        Gather = !Gather;
+        if (Gather) Take(); else Forget();
         Fire();
     }
 
-    /// <summary>Закрепить весь план целиком, заменив прежнее закреплённое.</summary>
-    public static void Set(List<Entry> entries) {
-        Items.Clear();
-        foreach (var e in entries) Items.Add(e.Clone());
+    /// <summary>Обновить снимок хранилища. Кнопка в окне и на панели.</summary>
+    public static void Snapshot() { Take(); Fire(); }
+
+    static void Forget() {
+        Chests.Clear();
+        Boxes = 0;
+        HasSnapshot = false;
+    }
+
+    static void Take() {
+        Chests.Clear();
+        int boxes;
+        foreach (var kv in Stock.ChestsOnly(out boxes)) Chests[kv.Key] = kv.Value;
+        Boxes = boxes;
+        At = System.DateTime.Now;
+        var me = Player.m_localPlayer;
+        Where = me != null ? me.transform.position : Vector3.zero;
+        HasSnapshot = true;
+    }
+
+    /// <summary>Сколько метров от места снимка до игрока. -1: игрока нет.</summary>
+    public static int DistanceFromSnapshot() {
+        var me = Player.m_localPlayer;
+        if (me == null) return -1;
+        return Mathf.RoundToInt(Vector3.Distance(me.transform.position, Where));
+    }
+
+    /// <summary>Материалы закреплены, а снимка нет (файл из старой версии).
+    /// Сам мод снимок не снимает: в поле это обнулило бы сундуки, поэтому
+    /// только просит.</summary>
+    public static bool Stale { get { return Gather && !HasSnapshot; } }
+
+    public static void Set(bool plan, bool gather) {
+        if (Plan == plan && Gather == gather) return;
+        Plan = plan;
+        Gather = gather;
+        if (!gather) Forget();
         Fire();
     }
 
-    public static void Clear() {
-        if (Items.Count == 0) return;
-        Items.Clear();
-        Fire();
-    }
+    public static void Clear() { Set(false, false); }
 
-    /// <summary>Совпадает ли закреплённое с планом позиция в позицию. Нужно
-    /// кнопке в окне: она должна читаться как «закреплено», а не «нажми
-    /// ещё раз».</summary>
-    public static bool SameAs(List<Entry> cart) {
-        if (cart.Count != Items.Count || cart.Count == 0) return false;
-        foreach (var e in cart) {
-            var mine = Find(e.Id);
-            if (mine == null || mine.Qty != e.Qty || mine.Quality != e.Quality
-                || !SameMade(mine, e)) return false;
-        }
-        return true;
-    }
-
-    static bool SameMade(Entry a, Entry b) {
-        if (a.Made.Count != b.Made.Count) return false;
-        for (int i = 0; i < a.Made.Count; i++) if (a.Made[i] != b.Made[i]) return false;
-        return true;
-    }
-
-    /// <summary>Строка списка: сколько при себе и сколько надо всего.</summary>
+    /// <summary>
+    /// Строка «Материалы»: сколько нужно всего, сколько из этого в сундуках
+    /// по снимку, сколько в рюкзаке сейчас и сколько ещё добыть. Части не
+    /// больше целого.
+    /// </summary>
     public struct MatRow {
         public string Id;
-        public int Have, Need;
-        public bool Done { get { return Have >= Need; } }
+        public int Total, Chests, Bag;
+        public int Left { get { return Total - Chests - Bag; } }
+        public bool Done { get { return Left <= 0; } }
     }
 
     /// <summary>
-    /// Что нужно и сколько из этого уже при себе.
-    ///
-    /// Считается только рюкзак — сундуки сюда не входят намеренно, см.
-    /// Stock.Count(bool). Показывать «есть» то, что лежит в базе, значит
-    /// отвечать не на тот вопрос: список висит на экране, пока игрок в поле.
-    ///
-    /// Нужное не урезается до остатка: видно и то, сколько собрано, и сколько
-    /// всего. «1 / 10» отвечает сразу на оба вопроса, а «ещё 9» — только на
-    /// один, и по нему не понять, далеко ли до конца.
+    /// Что показывает панель: только то, за чем идти, то есть чего не
+    /// хватило в сундуках при снимке. Добытое гаснет, а не пропадает.
     /// </summary>
     public static List<MatRow> Rows() {
         var rows = new List<MatRow>();
-        if (Items.Count == 0) return rows;
-
-        var need = RawView ? Planner.Raw(Items) : Planner.Direct(Items);
-        var have = Stock.Count(false);
+        if (!Gather || !HasSnapshot) return rows;
+        var need = RawView ? Planner.Raw(Planner.Cart) : Planner.Direct(Planner.Cart);
+        var bag = Stock.Count(false);
         foreach (var kv in need) {
             if (kv.Value <= 0) continue;
-            int got;
-            rows.Add(new MatRow {
-                Id = kv.Key,
-                Need = kv.Value,
-                // Больше нужного показывать незачем: «14 / 10» читается как
-                // ошибка счёта, а не как запас.
-                Have = System.Math.Min(have.TryGetValue(kv.Key, out got) ? got : 0,
-                                       kv.Value),
-            });
+            int c, b;
+            Chests.TryGetValue(kv.Key, out c);
+            bag.TryGetValue(kv.Key, out b);
+            c = System.Math.Min(c, kv.Value);
+            if (kv.Value - c <= 0) continue;
+            b = System.Math.Min(b, kv.Value - c);
+            rows.Add(new MatRow { Id = kv.Key, Total = kv.Value, Chests = c, Bag = b });
         }
         return rows;
     }

@@ -26,6 +26,28 @@ public static class Stock {
     /// собрано» при пустом рюкзаке отправит домой за тем, чего ты туда и
     /// пришёл добывать.
     /// </summary>
+    /// <summary>
+    /// Только сундуки рядом, без рюкзака, и сколько их. Для снимка
+    /// хранилища: все предметы, а не только то, что в плане. Настройка
+    /// «считать сундуки» выключена: пусто.
+    /// </summary>
+    public static Dictionary<string, int> ChestsOnly(out int boxes) {
+        var have = new Dictionary<string, int>();
+        boxes = 0;
+        var player = Player.m_localPlayer;
+        if (player == null || !IncludeChests) return have;
+        foreach (var container in Object.FindObjectsByType<Container>(FindObjectsSortMode.None)) {
+            if (container == null || container.GetInventory() == null) continue;
+            if (Vector3.Distance(container.transform.position, player.transform.position) > ChestRadius)
+                continue;
+            if (container.m_nview == null || !container.m_nview.IsValid()) continue;
+            if (!container.CheckAccess(Game.instance.GetPlayerProfile().GetPlayerID())) continue;
+            boxes++;
+            Take(have, container.GetInventory());
+        }
+        return have;
+    }
+
     public static Dictionary<string, int> Count(bool includeChests) {
         var have = new Dictionary<string, int>();
         var player = Player.m_localPlayer;

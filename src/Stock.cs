@@ -28,11 +28,19 @@ public static class Stock {
     /// </summary>
     public static Dictionary<string, int> Count(bool includeChests) {
         var have = new Dictionary<string, int>();
-        var player = Player.m_localPlayer;
-        if (player == null) return have;
+        foreach (var inv in Inventories(includeChests)) Take(have, inv);
+        return have;
+    }
 
-        Take(have, player.GetInventory());
-        if (!includeChests) return have;
+    /// <summary>
+    /// Рюкзак и, если просили, сундуки рядом: общий обход для Count и Owned.
+    /// </summary>
+    static IEnumerable<Inventory> Inventories(bool includeChests) {
+        var player = Player.m_localPlayer;
+        if (player == null) yield break;
+
+        yield return player.GetInventory();
+        if (!includeChests) yield break;
 
         // Сундуки рядом. Container.m_nview.IsValid() отсекает выгруженные, а
         // CheckAccess — чужие с замком: считать их своими нечестно.
@@ -44,9 +52,30 @@ public static class Stock {
                 continue;
             if (container.m_nview == null || !container.m_nview.IsValid()) continue;
             if (!container.CheckAccess(Game.instance.GetPlayerProfile().GetPlayerID())) continue;
-            Take(have, container.GetInventory());
+            yield return container.GetInventory();
         }
-        return have;
+    }
+
+    /// <summary>
+    /// Уже сделанные вещи и их уровни: id → уровни по убыванию. Рюкзак, надетое
+    /// и сундуки рядом (по той же настройке, что и счёт материалов). Отсюда
+    /// берёт уровни переключатель «Своё», вместо отметок вручную.
+    /// </summary>
+    public static Dictionary<string, List<int>> Owned() {
+        var owned = new Dictionary<string, List<int>>();
+        foreach (var inv in Inventories(IncludeChests)) {
+            if (inv == null) continue;
+            foreach (var item in inv.GetAllItems()) {
+                if (item == null || item.m_dropPrefab == null) continue;
+                if (item.m_shared == null || item.m_shared.m_maxQuality <= 1) continue;
+                var id = GameData.Slug(item.m_dropPrefab.name);
+                List<int> levels;
+                if (!owned.TryGetValue(id, out levels)) owned[id] = levels = new List<int>();
+                levels.Add(Mathf.Max(1, item.m_quality));
+            }
+        }
+        foreach (var levels in owned.Values) levels.Sort((a, b) => b.CompareTo(a));
+        return owned;
     }
 
     static void Take(Dictionary<string, int> have, Inventory inv) {

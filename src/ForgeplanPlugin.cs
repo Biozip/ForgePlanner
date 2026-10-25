@@ -31,6 +31,7 @@ public class ForgeplanPlugin : BaseUnityPlugin {
     ConfigEntry<KeyboardShortcut> _hotkey;
     ConfigEntry<float> _chestRadius;
     ConfigEntry<bool> _includeChests;
+    ConfigEntry<bool> _useOwned;
     ConfigEntry<bool> _selfTest;
     ConfigEntry<bool> _russian;
     ConfigEntry<Progress.Mode> _spoilers;
@@ -65,6 +66,10 @@ public class ForgeplanPlugin : BaseUnityPlugin {
             "Count nearby chests, not just your backpack.");
         _chestRadius = Config.Bind("Stock", "Radius", 20f,
             "How far a chest counts as yours, in metres.");
+        _useOwned = Config.Bind("Stock", "UpgradeOwned", false,
+            "Take the level of already-made gear from your backpack and nearby chests "
+            + "instead of marking it by hand. Also toggled by the Owned button.");
+        Planner.UseOwned = _useOwned.Value;
         // Английский по умолчанию: площадки с модами международные. Названия
         // предметов сюда не относятся — они приходят из Localization игры и
         // следуют её языку, подменять их мод не может и не должен.
@@ -173,6 +178,7 @@ public class ForgeplanPlugin : BaseUnityPlugin {
         Panel.OnLanguageChanged = ru => { _russian.Value = ru; };
         Panel.OnSpoilersChanged = mode => { _spoilers.Value = mode; };
         Panel.OnChestsChanged = on => { _includeChests.Value = on; };
+        Panel.OnOwnedChanged = on => { _useOwned.Value = on; };
         Panel.OnCardChanged = (on, compare) => {
             _cardEnabled.Value = on;
             _cardCompare.Value = compare;

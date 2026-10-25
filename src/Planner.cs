@@ -64,6 +64,24 @@ public static class Planner {
     public static bool BurnCoalFromWood;
     /// <summary>Множитель на группу.</summary>
     public static int Players = 1;
+    /// <summary>
+    /// «Своё»: уровни уже сделанных вещей берутся из рюкзака и сундуков рядом,
+    /// а не из отметок вручную. Отметки при этом не трогаются: выключил, и
+    /// план считает ровно как раньше.
+    /// </summary>
+    public static bool UseOwned;
+
+    /// <summary>
+    /// По каким уровням считать сделанное. Вручную: Entry.Made. Со «Своим»:
+    /// лучшие найденные экземпляры, не больше, чем заказано. owned: снимок
+    /// Stock.Owned(), один на расчёт: обходить сундуки на каждую позицию дорого.
+    /// </summary>
+    public static List<int> MadeOf(Entry e, Dictionary<string, List<int>> owned) {
+        if (!UseOwned || owned == null) return e.Made;
+        List<int> levels;
+        if (!owned.TryGetValue(e.Id, out levels)) return new List<int>();
+        return levels.Take(System.Math.Max(0, e.Qty)).ToList();
+    }
 
     static void Add(Dictionary<string, int> t, string m, int n) {
         int had;
@@ -128,13 +146,14 @@ public static class Planner {
     /// </summary>
     public static Dictionary<string, int> Direct(List<Entry> cart) {
         var t = new Dictionary<string, int>();
+        var owned = UseOwned ? Stock.Owned() : null;
         foreach (var e in cart) {
             var it = GameData.Get(e.Id);
             if (it == null || !it.HasRecipe) continue;
             // Уже сделанные экземпляры платят только доплаты со своего уровня,
             // остальные — весь путь с нуля. Так же считает direct() в calc.js.
             int made = 0;
-            foreach (var h in e.Made) {
+            foreach (var h in MadeOf(e, owned)) {
                 if (h <= 0 || made >= QtyOf(e)) continue;
                 made++;
                 foreach (var kv in LevelCost(it, e.Quality, h)) Add(t, kv.Key, kv.Value);

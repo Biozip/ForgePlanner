@@ -38,6 +38,10 @@ public static class L {
     public static string UnitHas(int level) {
         return T("have it at level " + level, "есть, ур. " + level);
     }
+    /// <summary>Переключатель «Своё»: уровни сделанного берутся из рюкзака и
+    /// сундуков рядом.</summary>
+    public static string Owned { get { return T("Owned", "Своё"); } }
+    public static string UnitFound { get { return T("(found nearby)", "(найден рядом)"); } }
 
     /* Тотемы PlanBuild. */
     public static string AddTotem { get { return T("+ Totem", "+ Тотем"); } }

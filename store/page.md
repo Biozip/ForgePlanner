@@ -91,6 +91,13 @@ made.
 
 The marks are part of the plan: they are saved with it and pinned with it.
 
+Or let the mod find them. Press **Owned** and the levels come from the gear you
+have on you, worn or in the backpack, and from nearby chests if chests are
+counted. The best copies are used first, as many as the row asks for, and those
+lines say *found nearby*. Your own marks stay as they were and come back when
+you turn **Owned** off. While it is on, the level buttons on those lines do
+nothing.
+
 ## Pin the plan
 
 **Pin the plan and close the window.** A copy of it stays on screen in a small
@@ -214,6 +221,7 @@ nothing behind but the config file and your saved plans, small text files in
 | `General` | `Spoilers` | `Discovered` | What the catalogue shows: `Discovered`, `Bosses` or `Off` |
 | `Stock` | `CountChests` | `true` | Count nearby chests, not just your backpack |
 | `Stock` | `Radius` | `20` | How far a chest counts as yours, in metres |
+| `Stock` | `UpgradeOwned` | `false` | Take the level of already-made gear from your backpack and nearby chests. Also the Owned button |
 | `Station` | `Button` | `true` | Show the ForgePlanner button on station panels |
 | `Station` | `Corner` | `BottomRight` | Which side of the panel the button's shelf sits on |
 | `Station` | `OffsetX` | `14` | Shelf offset from the panel edge, in points |

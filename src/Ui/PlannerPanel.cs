@@ -104,6 +104,9 @@ public class PlannerPanel {
     public System.Action<bool> OnChestsChanged;
     /// <summary>Считать ли сундуки. Живёт в конфиге, сюда кладёт плагин.</summary>
     public bool Chests = true;
+    /// <summary>Переключили «Своё»: сохранить в конфиг.</summary>
+    public System.Action<bool> OnOwnedChanged;
+    Button _ownedBtn;
 
     List<ItemDef> _matches = new List<ItemDef>();
     string _queryShown;
@@ -629,6 +632,12 @@ public class PlannerPanel {
         _haveBtn = UiKit.Button(bar, L.Inventory, 124, 30, () => {
             _countHave = !_countHave; _planDirty = true;
         }, 15);
+        _ownedBtn = UiKit.Button(bar, L.Owned, 100, 30, () => {
+            Planner.UseOwned = !Planner.UseOwned;
+            if (OnOwnedChanged != null) OnOwnedChanged(Planner.UseOwned);
+            Ui.PinHud.Invalidate();
+            _planDirty = true;
+        }, 15);
     }
 
     static void Mark(Button b, bool on) {
@@ -751,6 +760,7 @@ public class PlannerPanel {
         Mark(_coalBtn, Planner.CountCoal);
         Mark(_woodCoalBtn, Planner.BurnCoalFromWood);
         Mark(_haveBtn, _countHave);
+        Mark(_ownedBtn, Planner.UseOwned);
 
         bool pinned = Pin.SameAs(Planner.Cart);
         Mark(_pinBtn, pinned);
@@ -765,18 +775,20 @@ public class PlannerPanel {
         // Под строкой тотема — его постройки по видам. Строки из двух пулов,
         // поэтому порядок в списке ставим руками.
         int slot = 0, sub = 0, units = 0;
+        var owned = Planner.UseOwned ? Stock.Owned() : null;
         _open.RemoveWhere(x => !Planner.Cart.Contains(x));
         for (int i = 0; i < Planner.Cart.Count; i++) {
             if (i >= _cartRows.Count) _cartRows.Add(new CartRow(_cart, this));
             var e = Planner.Cart[i];
-            _cartRows[i].Show(e, _open.Contains(e));
+            _cartRows[i].Show(e, _open.Contains(e),
+                              Planner.MadeOf(e, owned).Count(h => h > 0));
             _cartRows[i].Go.transform.SetSiblingIndex(slot++);
             // Раскрытая строка — по ряду на каждый экземпляр: какой уже есть
             // и на каком уровне.
             if (_open.Contains(e) && Unfolds(GameData.Get(e.Id)))
                 for (int k = 0; k < e.Qty; k++) {
                     if (units >= _unitRows.Count) _unitRows.Add(new UnitRow(_cart, this));
-                    _unitRows[units].Show(e, k);
+                    _unitRows[units].Show(e, k, Planner.MadeOf(e, owned));
                     _unitRows[units++].Go.transform.SetSiblingIndex(slot++);
                 }
             if (!PlanTotems.IsTotem(e.Id)) continue;
@@ -1390,13 +1402,12 @@ public class PlannerPanel {
             hover.Exit = () => owner._card.Leave(_go);
         }
 
-        public void Show(Entry e, bool open) {
+        public void Show(Entry e, bool open, int made) {
             _entry = e;
             var it = GameData.Get(e.Id);
             _icon.sprite = it != null ? it.Icon : null;
             _icon.color = _icon.sprite != null ? Color.white : Color.clear;
             _name.text = it != null ? it.Shown : e.Id;
-            int made = e.MadeCount;
             if (made > 0)
                 _name.text += "  <size=80%><color=#8A8172>" + L.MadeSummary(made) + "</color></size>";
 
@@ -1459,7 +1470,9 @@ public class PlannerPanel {
             for (int q = 1; q <= 4; q++) {
                 int level = q;
                 _levels.Add(UiKit.Button(levels, q.ToString(), 28, 22, () => {
-                    if (_entry == null) return;
+                    // Со «Своим» уровни приходят из сундуков, отметки руками
+                    // ничего бы не поменяли, поэтому молча ждём, пока его выключат.
+                    if (_entry == null || Planner.UseOwned) return;
                     while (_entry.Made.Count <= _index) _entry.Made.Add(0);
                     _entry.Made[_index] = Mathf.Min(_entry.Made[_index], _entry.Quality) == level
                         ? 0 : level;
@@ -1472,13 +1485,16 @@ public class PlannerPanel {
             Gap(rt, DelWidth);
         }
 
-        public void Show(Entry e, int index) {
+        /// <param name="made">Уровни, по которым считает план: Entry.Made или
+        /// найденное со «Своим», см. Planner.MadeOf.</param>
+        public void Show(Entry e, int index, List<int> made) {
             _entry = e;
             _index = index;
             int target = Mathf.Max(1, e.Quality);
-            int had = index < e.Made.Count ? Mathf.Min(e.Made[index], target) : 0;
+            int had = index < made.Count ? Mathf.Min(made[index], target) : 0;
             _name.text = "\u2116" + (index + 1) + "  \u00B7  "
-                + (had <= 0 ? L.UnitNew : had >= target ? L.UnitDone : L.UnitHas(had));
+                + (had <= 0 ? L.UnitNew : had >= target ? L.UnitDone : L.UnitHas(had))
+                + (Planner.UseOwned && had > 0 ? "  <size=80%>" + L.UnitFound + "</size>" : "");
             for (int q = 0; q < _levels.Count; q++) {
                 bool on = q < target;
                 _levels[q].gameObject.SetActive(on);
